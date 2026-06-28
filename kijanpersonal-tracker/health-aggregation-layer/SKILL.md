@@ -453,6 +453,7 @@ All user-facing strings must be localized:
 - **`references/nrs-tools.md`** — NRS-Interpretationsleitfaden und NRS-Tools für Kijan (Visualisierung, Threshold-Alerts, Trend-Korrelation).
 - **`references/implementation-status-2026-06-02.md`** — Cron-job Statusbericht 2026-06-02. SPEZIFIKATION ✅ VOLLSTÄNDIG (30 Dateien). Implementierung: ~25-30%. MILE-001 ⚠️75%, MILE-002 ✅100%. models_health.py ❌, Service Layer ❌. Migration 0007: 31 Tabellen, 60 Partitionen. Revision-Konflikt: 0007_add_energy_cost_metric.py vs 0007_health_aggregation_layer.py.
 - **`references/hal-orm-gap.md`** — models_health.py ist NICHT vorhanden. DAL nutzt raw `bind.tables[]` access.
+- **`references/implementation-status-2026-06-27.md`** — Implementierungsstand 2026-06-27: SPECS.md 100% vollständig (36/30 Dateien). DAL ✅, Router ✅, Tests ✅, models_health.py ❌, Service Layer ❌.
 
 ## Implementation Status (2026-06-03 09:34)
 
