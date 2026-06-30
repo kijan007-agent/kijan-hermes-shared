@@ -28,6 +28,21 @@ These are valid additions — either add to SPECS.md or note as out-of-scope.
 
 Use `os.walk()` in Python for cron jobs (no shell dependency). Filter by `.md` extension. Normalize paths with `os.path.relpath()`.
 
+## 2026-06-30 Update — New Gaps Discovered
+
+The following files are listed in SPECS.md §4 but DON'T exist on disk:
+
+| Datei | Status |
+|-------|--------|
+| `time-series/mobile-cache.md` | ❌ MISSING (referenced in §4 table) |
+| `i18n/architecture.md` | ❌ MISSING (i18n/ directory doesn't exist) |
+| `i18n/key-conventions.md` | ❌ MISSING |
+| `i18n/symptom-mapping.md` | ❌ MISSING |
+
+**Impact:** `i18n/` is a complete gap — 3 files missing. `time-series/mobile-cache.md` is the last missing spec from the 5-file gap.
+
+**SPECS.md needs updating:** Remove `i18n/` entries from §4 or create the files. Add `time-series/mobile-cache.md` to either §4 or remove from manifest.
+
 ## SPECS.md Header Status Values
 
 - `✅ VOLLSTÄNDIG` — all manifest files present, no critical gaps

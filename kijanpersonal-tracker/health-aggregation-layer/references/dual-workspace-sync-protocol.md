@@ -13,6 +13,13 @@
    ```
 5. When in doubt, check BOTH paths with `ls` before reading/writing
 
+## HAL-Spezifikationen — Spezifischer Pfad
+
+HAL specs existieren unter: `/workspace/Github/KijanPersonalTracker/kpt-doc/_specs/health-aggregation-layer/`
+Der Pfad `/data/Github/KijanPersonalTracker-feature/kpt-doc/_specs/health-aggregation-layer/` existiert NICHT.
+
+Cron-Jobs die `/data/Github/...` für HAL specs verwenden → immer zuerst `/workspace/` prüfen.
+
 ## Pattern
 ```bash
 # Write to both paths
