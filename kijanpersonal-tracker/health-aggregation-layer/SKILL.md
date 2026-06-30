@@ -447,7 +447,7 @@ All user-facing strings must be localized:
 - **`references/business-logic-reference.md`** — ⚠️ STALE: documents service layer files (correlation_engine.py, trend_engine.py, import_service.py, report_service.py, i18n_layer.py) that DON'T EXIST. Actual implementation: OLS + correlation in `app/routers/health_aggregation.py` working tree only. Service layer is Phase 3 (pending).
 - **`references/kijan-frontend-spec-reference.md`** — Kijan Frontend Spezifikationen: Flutter Mobile, React Web, Pain Scale, i18n, API Mapping, Design-Tokens (Phase 3+ Frontend)
 - **`references/health-aggregation-spec-2026-05-21.md`** — Full task inventory (44 tasks across 8 milestones) from SPECS.md, discrepancy with 32-task plan.
-- **`references/missing-specs.md`** — Missing HAL specs (RESOLVED 2026-05-27). All 4 missing specs created.
+- **`references/missing-specs.md`** — ⚠️ UPDATE 2026-06-30: 4 files listed as "MISSING" (not resolved). time-series/mobile-cache.md + i18n/ (3 files) still don't exist on disk.
 - **`references/specs-consistency-check.md`** — Cron-safe SPECS.md manifest vs disk verification pattern (discovered 2026-05-31). **⚠️ STALE**: Manifest 2026-05-27 veraltet — 5 neue Dateien nicht erfasst. Siehe `references/specs-consistency-check-2026-06-02.md`.
 - **`references/bearable-severity.md`** — Bearable Severity-Skala (0-6) mit NRS-Äquivalenten und medizinischen Standards (ICHD-3, WHO Pain Ladder).
 - **`references/nrs-tools.md`** — NRS-Interpretationsleitfaden und NRS-Tools für Kijan (Visualisierung, Threshold-Alerts, Trend-Korrelation).
