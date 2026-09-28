@@ -1,0 +1,171 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" font-family="system-ui, sans-serif">
+  <defs>
+    <style>
+      .title { font-family: 'Space Grotesk', system-ui, sans-serif; font-weight: 700; }
+      .mono  { font-family: 'JetBrains Mono', monospace; }
+      .body  { font-family: 'Inter', system-ui, sans-serif; }
+    </style>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#0f0f1a"/>
+    </linearGradient>
+    <linearGradient id="teal-grad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#00d4aa"/>
+      <stop offset="100%" stop-color="#00a88a"/>
+    </linearGradient>
+    <linearGradient id="orange-grad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ff6b35"/>
+      <stop offset="100%" stop-color="#e05520"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="soft-shadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="900" fill="url(#bg)" rx="16"/>
+
+  <!-- Grid dots -->
+  <pattern id="dots" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+    <circle cx="20" cy="20" r="1" fill="#2d2d3a" opacity="0.8"/>
+  </pattern>
+  <rect width="1200" height="900" fill="url(#dots)"/>
+
+  <!-- Header bar -->
+  <rect x="0" y="0" width="1200" height="72" fill="#1a1a2e" opacity="0.9"/>
+  <text x="48" y="46" class="title" font-size="22" fill="#ffffff" letter-spacing="0.05em">
+    Kijan Personal Tracker
+  </text>
+  <text x="1152" y="46" class="mono" font-size="13" fill="#00d4aa" text-anchor="end">
+    PRIVAT · lokal · dein_
+  </text>
+
+  <!-- Hero line -->
+  <line x1="48" y1="72" x2="1152" y2="72" stroke="#00d4aa" stroke-width="1" opacity="0.4"/>
+
+  <!-- MAIN TITLE -->
+  <text x="600" y="130" class="title" font-size="34" fill="#ffffff" text-anchor="middle" letter-spacing="0.03em">
+    Dein Körper. Deine Daten. Dein Gerät.
+  </text>
+  <text x="600" y="158" class="body" font-size="15" fill="#9ca3af" text-anchor="middle">
+    KPT verbindet Training · Schlaf · Ernährung — ohne Cloud, ohne Werbung, ohne Datenverkauf.
+  </text>
+
+  <!-- Central graph node -->
+  <circle cx="600" cy="290" r="56" fill="#1a1a2e" stroke="url(#teal-grad)" stroke-width="2" filter="url(#glow)"/>
+  <circle cx="600" cy="290" r="42" fill="none" stroke="#00d4aa" stroke-width="1" opacity="0.3" stroke-dasharray="4 4"/>
+  <text x="600" y="286" class="title" font-size="13" fill="#00d4aa" text-anchor="middle">KPT</text>
+  <text x="600" y="302" class="mono" font-size="10" fill="#9ca3af" text-anchor="middle">Engine</text>
+
+  <!-- Connection lines from center to three data types -->
+  <line x1="560" y1="248" x2="370" y2="198" stroke="#00d4aa" stroke-width="1.5" opacity="0.5"/>
+  <line x1="640" y1="248" x2="830" y2="198" stroke="#00d4aa" stroke-width="1.5" opacity="0.5"/>
+  <line x1="600" y1="346" x2="600" y2="408" stroke="#00d4aa" stroke-width="1.5" opacity="0.5"/>
+
+  <!-- Training node -->
+  <rect x="296" y="162" width="148" height="72" rx="10" fill="#2d2d3a" filter="url(#soft-shadow)"/>
+  <rect x="296" y="162" width="4" height="72" rx="2" fill="url(#teal-grad)"/>
+  <text x="320" y="186" class="title" font-size="13" fill="#00d4aa">TRAINING</text>
+  <text x="320" y="202" class="body" font-size="10" fill="#9ca3af">Herzfrequenz, Pace,</text>
+  <text x="320" y="216" class="body" font-size="10" fill="#9ca3af">Kalorien, Intervalle</text>
+  <text x="320" y="230" class="mono" font-size="9" fill="#6b7280">Garmin · Fitbit · Oura</text>
+
+  <!-- Sleep node -->
+  <rect x="756" y="162" width="148" height="72" rx="10" fill="#2d2d3a" filter="url(#soft-shadow)"/>
+  <rect x="756" y="162" width="4" height="72" rx="2" fill="url(#orange-grad)"/>
+  <text x="780" y="186" class="title" font-size="13" fill="#ff6b35">SCHLAF</text>
+  <text x="780" y="202" class="body" font-size="10" fill="#9ca3af">Phasen, Dauer, HRV,</text>
+  <text x="780" y="216" class="body" font-size="10" fill="#9ca3af">Restedness Score</text>
+  <text x="780" y="230" class="mono" font-size="9" fill="#6b7280">Oura · Whoop · SleepCycle</text>
+
+  <!-- Nutrition node -->
+  <rect x="526" y="408" width="148" height="72" rx="10" fill="#2d2d3a" filter="url(#soft-shadow)"/>
+  <rect x="526" y="408" width="4" height="72" rx="2" fill="#00d4aa" opacity="0.6"/>
+  <text x="550" y="432" class="title" font-size="13" fill="#ffffff">ERNÄHRUNG</text>
+  <text x="550" y="448" class="body" font-size="10" fill="#9ca3af">Makros, Kalorien,</text>
+  <text x="550" y="462" class="body" font-size="10" fill="#9ca3af">Blutzucker (CGM)</text>
+  <text x="550" y="476" class="mono" font-size="9" fill="#6b7280">MyFitnessPal · Cronometer</text>
+
+  <!-- Divider -->
+  <line x1="48" y1="508" x2="1152" y2="508" stroke="#2d2d3a" stroke-width="1"/>
+
+  <!-- THREE CORE MESSAGES -->
+  <text x="48" y="538" class="title" font-size="18" fill="#ffffff" letter-spacing="0.04em">
+    3 KERNBOTSCHAFEN
+  </text>
+
+  <!-- Core 1: Datenhoheit lokal -->
+  <rect x="48" y="556" width="352" height="120" rx="12" fill="#2d2d3a" filter="url(#soft-shadow)"/>
+  <circle cx="80" cy="588" r="14" fill="#00d4aa" opacity="0.15"/>
+  <text x="80" y="593" class="title" font-size="13" fill="#00d4aa" text-anchor="middle">01</text>
+  <text x="104" y="588" class="title" font-size="15" fill="#ffffff">Datenhoheit lokal</text>
+  <text x="68" y="614" class="body" font-size="11" fill="#9ca3af">Deine Gesundheitsdaten verlassen</text>
+  <text x="68" y="630" class="body" font-size="11" fill="#9ca3af">dein Gerät nie. Kein Cloud-Upload,</text>
+  <text x="68" y="646" class="body" font-size="11" fill="#9ca3af">kein Werbetracking, keine Drittanbieter.</text>
+  <text x="68" y="666" class="mono" font-size="10" fill="#00d4aa">↳ 100% lokale Verarbeitung</text>
+
+  <!-- Core 2: Ganzheitliche Verknüpfung -->
+  <rect x="424" y="556" width="352" height="120" rx="12" fill="#2d2d3a" filter="url(#soft-shadow)"/>
+  <circle cx="456" cy="588" r="14" fill="#ff6b35" opacity="0.15"/>
+  <text x="456" y="593" class="title" font-size="13" fill="#ff6b35" text-anchor="middle">02</text>
+  <text x="480" y="588" class="title" font-size="15" fill="#ffffff">Ganzheitliche Verknüpfung</text>
+  <text x="444" y="614" class="body" font-size="11" fill="#9ca3af">Training beeinflusst Schlaf, Schlaf</text>
+  <text x="444" y="630" class="body" font-size="11" fill="#9ca3af">beeinflusst Ernährung. KPT zeigt dir</text>
+  <text x="444" y="646" class="body" font-size="11" fill="#9ca3af">die Zusammenhänge — nicht nur Zahlen.</text>
+  <text x="444" y="666" class="mono" font-size="10" fill="#ff6b35">↳ Training + Schlaf + Ernährung</text>
+
+  <!-- Core 3: Persönliche Einblicke -->
+  <rect x="800" y="556" width="352" height="120" rx="12" fill="#2d2d3a" filter="url(#soft-shadow)"/>
+  <circle cx="832" cy="588" r="14" fill="#ffffff" opacity="0.15"/>
+  <text x="832" y="593" class="title" font-size="13" fill="#ffffff" text-anchor="middle">03</text>
+  <text x="856" y="588" class="title" font-size="15" fill="#ffffff">Persönliche Einblicke</text>
+  <text x="820" y="614" class="body" font-size="11" fill="#9ca3af">Individuelle Muster, auf dich</text>
+  <text x="820" y="630" class="body" font-size="11" fill="#9ca3af">zugeschnitten — nicht generische</text>
+  <text x="820" y="646" class="body" font-size="11" fill="#9ca3af">Dashboards. Dein eigenes Modell.</text>
+  <text x="820" y="666" class="mono" font-size="10" fill="#9ca3af">↳ Keine Peer-Vergleiche</text>
+
+  <!-- Divider -->
+  <line x1="48" y1="700" x2="1152" y2="700" stroke="#2d2d3a" stroke-width="1"/>
+
+  <!-- THREE TARGET SEGMENTS -->
+  <text x="48" y="730" class="title" font-size="18" fill="#ffffff" letter-spacing="0.04em">
+    3 ZIELGRUPPEN
+  </text>
+
+  <!-- Segment A -->
+  <rect x="48" y="750" width="352" height="100" rx="12" fill="#2d2d3a" filter="url(#soft-shadow)"/>
+  <rect x="48" y="750" width="352" height="4" rx="2" fill="url(#teal-grad)"/>
+  <text x="72" y="778" class="title" font-size="12" fill="#00d4aa">SEGMENT A</text>
+  <text x="72" y="796" class="body" font-size="13" fill="#ffffff">Datengräber &amp; Quantified-Self</text>
+  <text x="72" y="814" class="body" font-size="11" fill="#9ca3af">25–40 · Technisch affin · Datensouverän</text>
+  <text x="72" y="832" class="mono" font-size="10" fill="#6b7280">Priorität: Kickoff + Advocacy</text>
+
+  <!-- Segment B -->
+  <rect x="424" y="750" width="352" height="100" rx="12" fill="#2d2d3a" filter="url(#soft-shadow)"/>
+  <rect x="424" y="750" width="352" height="4" rx="2" fill="url(#orange-grad)"/>
+  <text x="448" y="778" class="title" font-size="12" fill="#ff6b35">SEGMENT B</text>
+  <text x="448" y="796" class="body" font-size="13" fill="#ffffff">Gesundheits-Optimierer</text>
+  <text x="448" y="814" class="body" font-size="11" fill="#9ca3af">30–55 · Chronische Beschwerden · CFS/Fatigue</text>
+  <text x="448" y="832" class="mono" font-size="10" fill="#6b7280">Priorität: Kernnutzen-Träger</text>
+
+  <!-- Segment C -->
+  <rect x="800" y="750" width="352" height="100" rx="12" fill="#2d2d3a" filter="url(#soft-shadow)"/>
+  <rect x="800" y="750" width="352" height="4" rx="2" fill="#2d2d3a" stroke="#9ca3af" stroke-width="1"/>
+  <text x="824" y="778" class="title" font-size="12" fill="#9ca3af">SEGMENT C</text>
+  <text x="824" y="796" class="body" font-size="13" fill="#ffffff">Produktivitäts-Fokuser</text>
+  <text x="824" y="814" class="body" font-size="11" fill="#9ca3af">28–45 · Bio-Hacker · Wissensarbeitend</text>
+  <text x="824" y="832" class="mono" font-size="10" fill="#6b7280">Priorität: Wachstumssegment (Post-Launch)</text>
+
+  <!-- Footer -->
+  <rect x="0" y="868" width="1200" height="32" fill="#1a1a2e" opacity="0.8"/>
+  <text x="48" y="888" class="mono" font-size="11" fill="#6b7280">
+    Kijan Personal Tracker · KPT v2026
+  </text>
+  <text x="1152" y="888" class="mono" font-size="11" fill="#00d4aa" text-anchor="end">
+    kpt.kijan.ch
+  </text>
+</svg>
