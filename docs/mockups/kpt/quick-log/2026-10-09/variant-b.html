@@ -1,0 +1,200 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>B — Guided Check</title>
+<style>
+  :root{ --bg:#F6F1E7; --surface:#FFFFFF; --ink:#2C3E50; --muted:#5D6D7E; --line:#E8E0D0; --primary:#2B6A4F; --primary-soft:#D9EDE4; --primary-deep:#1B4332; --accent:#E07A5F; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 -apple-system,Segoe UI,system-ui,sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+  .hdbar{position:relative;padding:16px 16px 0;display:flex;align-items:center;gap:10px}
+  .back{width:30px;height:30px;border-radius:10px;background:#fff;border:1px solid var(--line);font-size:15px}
+  .dots{flex:1;display:flex;gap:5px;justify-content:center}
+  .dots i{width:20px;height:5px;border-radius:3px;background:#D8CDB8}
+  .dots i.on{background:var(--primary)}
+  .q{flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 22px;text-align:center}
+  .q h1{font-size:20px;margin:0 0 8px}
+  .q p{color:var(--muted);margin:0 0 18px}
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:260px;margin:0 auto}
+  .opt{padding:16px 8px;border-radius:14px;background:#fff;border:1px solid var(--line);cursor:pointer;font-size:13px;min-height:52px}
+  .opt:active{background:var(--primary-soft);border-color:var(--primary)}
+  .symlist{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:300px;margin:0 auto}
+  .sym{padding:12px 14px;border-radius:12px;background:#fff;border:1px solid var(--line);font-size:13px;min-height:44px}
+  .sym.sel{background:var(--primary-soft);border-color:var(--primary)}
+  .nav{display:flex;gap:10px;padding:14px 20px 18px}
+  .btn{flex:1;padding:16px;border-radius:14px;border:0;font-size:15px;font-weight:600;cursor:pointer;min-height:52px}
+  .btn.skip{background:#fff;border:1px solid var(--line);color:var(--muted)}
+  .btn.next{background:var(--primary);color:#fff}
+  .btn.next:disabled{opacity:.5}
+  .kind{position:absolute;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+  .env{position:absolute;right:16px;top:16px;font-size:11px;background:var(--primary-soft);color:var(--primary-deep);padding:4px 10px;border-radius:999px}
+  /* F-03: toast for Next, hidden by default, no decoration for Skip. */
+  .toast{position:absolute;left:20px;right:20px;bottom:88px;background:var(--primary-deep);color:#fff;padding:10px 14px;border-radius:12px;font-size:13px;text-align:center;opacity:.96}
+  .toast[hidden]{display:none}
+  /* F-01 (WCAG 2.4.7) — global :focus-visible ring on all <button> elements */
+  button:focus-visible{outline:3px solid var(--primary);outline-offset:2px;border-radius:8px}
+  .back:focus-visible,.opt:focus-visible,.sym:focus-visible,.btn:focus-visible{outline:3px solid var(--primary);outline-offset:3px;border-radius:10px}
+  /* F-02 (WCAG 2.3.3) — honour reduced-motion: drop all motion + transitions */
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none!important;animation:none!important}
+  }
+</style></head>
+<body>
+  <div class="hdbar">
+    <button class="back" onclick="history.back()">‹</button>
+    <div class="dot"></div>
+    <div class="dots"><i class="on"></i><i></i><i></i></div>
+    <div class="env">gentle</div>
+  </div>
+  <div class="kind">Guided check · today</div>
+
+  <div class="q" id="q">
+    <h1>How is your energy right now?</h1>
+    <p>There’s no wrong answer.</p>
+    <!-- F-06: unified 5-point face scale (rough/low/ok/good/great). ⚡ removed — it's not on the canonical scale. -->
+    <!-- F-03: each option sets a selection in JS; Next gates on it. -->
+    <div class="opts" id="energy-opts" role="radiogroup" aria-label="How is your energy right now?">
+      <button type="button" class="opt" data-energy="1" role="radio" aria-checked="false" aria-label="low">😣 Low</button>
+      <button type="button" class="opt" data-energy="2" role="radio" aria-checked="false" aria-label="low">😕 Tired</button>
+      <button type="button" class="opt" data-energy="3" role="radio" aria-checked="false" aria-label="ok">😐 Ok</button>
+      <button type="button" class="opt" data-energy="4" role="radio" aria-checked="false" aria-label="good">🙂 Good</button>
+      <button type="button" class="opt" data-energy="5" role="radio" aria-checked="false" aria-label="great">😊 Great</button>
+    </div>
+  </div>
+
+  <div class="q" id="q2" hidden>
+    <h1>Any symptoms today?</h1>
+    <p>Tap as many as you like. One is enough.</p>
+    <!-- F-03: symptom picks are multi-select; their value persists with Next, Skip discards. -->
+    <div class="symlist" id="sym-list" role="group" aria-label="Symptoms today">
+      <button type="button" class="sym" data-sym="fatigue">Fatigue</button>
+      <button type="button" class="sym" data-sym="brain-fog">Brain fog</button>
+      <button type="button" class="sym" data-sym="headache">Headache</button>
+      <button type="button" class="sym" data-sym="pain">Pain</button>
+      <button type="button" class="sym" data-sym="dizziness">Dizziness</button>
+      <button type="button" class="sym" data-sym="nausea">Nausea</button>
+    </div>
+  </div>
+
+  <!-- F-03: progress dot for q3 if/when added (currently 2 steps); toast for skip; persistent save on next. -->
+  <div class="nav">
+    <!-- Skip = discard the current question's selection without persisting, then advance. No toast (silent). -->
+    <button class="btn skip" type="button" id="btn-skip">Skip</button>
+    <!-- Next = persist current answer + advance. Disabled until a selection exists (or first tap on q2 is optional). -->
+    <button class="btn next" type="button" id="btn-next" disabled>Next</button>
+  </div>
+
+  <!-- F-03: subtle toast for Next — Skip stays silent per design (no confirmation noise on a deliberately discarded answer). -->
+  <div class="toast" id="toast" hidden>Saved.</div>
+
+  <!-- F-03: skip vs next semantics. Skip = discard + advance (silent). Next = persist + advance (toast). -->
+  <script>
+  (function () {
+    'use strict';
+    var STATE_KEY = 'kpt.quicklog.guided';
+    var q1 = document.getElementById('q');
+    var q2 = document.getElementById('q2');
+    var btnNext  = document.getElementById('btn-next');
+    var btnSkip  = document.getElementById('btn-skip');
+    var toast    = document.getElementById('toast');
+    var energyBtns = document.querySelectorAll('#energy-opts .opt');
+    var symBtns    = document.querySelectorAll('#sym-list .sym');
+    var state = { step: 1, energy: null, symptoms: [] };
+
+    function showToast(msg) {
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.hidden = false;
+      setTimeout(function () { toast.hidden = true; }, 1800);
+    }
+
+    function persist() {
+      try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch (e) { /* non-fatal */ }
+      // TODO(api): POST /api/quick-log/guided on final step. Not yet finalised — see t_f91cdd18-followup-api.
+      // Until the backend lands we only persist locally; UI behaviour is fully exercised without it.
+    }
+
+    function setEnergy(btn) {
+      var v = parseInt(btn.getAttribute('data-energy'), 10);
+      if (!v) return;
+      energyBtns.forEach(function (b) { b.classList.remove('sel'); b.setAttribute('aria-checked', 'false'); });
+      btn.classList.add('sel');
+      btn.setAttribute('aria-checked', 'true');
+      state.energy = v;
+      btnNext.disabled = false;
+      persist();
+    }
+
+    function toggleSym(btn) {
+      var v = btn.getAttribute('data-sym');
+      if (!v) return;
+      var idx = state.symptoms.indexOf(v);
+      if (idx === -1) { state.symptoms.push(v); btn.classList.add('sel'); btn.setAttribute('aria-pressed', 'true'); }
+      else            { state.symptoms.splice(idx, 1); btn.classList.remove('sel'); btn.setAttribute('aria-pressed', 'false'); }
+      btnNext.disabled = (state.step === 1 && !state.energy); // q2 has no required selection
+      persist();
+    }
+
+    function advance() {
+      if (state.step === 1) {
+        if (!state.energy) { btnNext.disabled = true; return; } // F-03: gate
+        q1.hidden = true; q2.hidden = false;
+        state.step = 2;
+        btnNext.textContent = 'Done';
+        // q2 has no required pick — allow Done without selection.
+        btnNext.disabled = false;
+        persist();
+      } else {
+        // Final step: persist + close.
+        persist();
+        showToast('Saved. Thank you.');
+        btnNext.disabled = true;
+        btnSkip.disabled = true;
+      }
+    }
+
+    function skip() {
+      // F-03: Skip discards current question's selection silently (no toast).
+      if (state.step === 1) {
+        state.energy = null;
+        energyBtns.forEach(function (b) { b.classList.remove('sel'); b.setAttribute('aria-checked', 'false'); });
+        btnNext.disabled = true;
+      } else {
+        state.symptoms = [];
+        symBtns.forEach(function (b) { b.classList.remove('sel'); b.setAttribute('aria-pressed', 'false'); });
+      }
+      advance();
+    }
+
+    energyBtns.forEach(function (b) { b.addEventListener('click', function () { setEnergy(b); }); });
+    symBtns.forEach(function (b)    { b.addEventListener('click', function () { toggleSym(b); }); });
+    btnNext.addEventListener('click', advance);
+    btnSkip.addEventListener('click', skip);
+
+    // Hydrate from a previous guided run — restores progress without re-asking.
+    try {
+      var raw = localStorage.getItem(STATE_KEY);
+      if (raw) {
+        var prior = JSON.parse(raw);
+        if (prior && prior.energy) {
+          energyBtns.forEach(function (b) {
+            if (parseInt(b.getAttribute('data-energy'), 10) === prior.energy) {
+              b.classList.add('sel'); b.setAttribute('aria-checked', 'true');
+            }
+          });
+        }
+        if (prior && Array.isArray(prior.symptoms)) {
+          prior.symptoms.forEach(function (s) {
+            symBtns.forEach(function (b) { if (b.getAttribute('data-sym') === s) { b.classList.add('sel'); b.setAttribute('aria-pressed', 'true'); } });
+          });
+        }
+        if (prior && prior.step === 2) {
+          state.step = 2; state.energy = prior.energy; state.symptoms = prior.symptoms || [];
+          q1.hidden = true; q2.hidden = false; btnNext.textContent = 'Done';
+        } else if (prior && prior.energy) {
+          state.energy = prior.energy;
+        }
+        btnNext.disabled = !(state.step === 1 ? state.energy : true);
+      }
+    } catch (e) { /* corrupt payload — start fresh */ }
+  })();
+  </script>
+</body></html>
