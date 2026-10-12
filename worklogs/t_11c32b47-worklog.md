@@ -16,7 +16,7 @@
 - **Upstream-Repo:** `/workspace/kijan-hermes-shared` (Branch `dev`)
 - **Retry-Hinweis:** Diese Task wurde in Run 1 (2026-10-09) bereits inhaltlich fertiggestellt (Commit `d4a45b8` auf `dev` lokal). Der Vorab-Worker konnte aus der Sandbox nicht pushen und blockierte mit `kind=capability`. Run 2 (heute) hat den SSH-Key `/workspace/.ssh/id_ed25519` korrekt eingebunden und erfolgreich nach `origin/dev` gepusht. Diese Task ist also inhaltlich unverändert gegenüber Run 1 — der Worklog reflektiert jetzt zusätzlich den erfolgreichen Push.
 
-## Aktionen (chronologisch)
+## Aktionen
 
 ### Run 1 (2026-10-09, Vorab-Worker)
 1. `kanban_show(t_11c32b47)` — Task-Body, Acceptance, Out-of-scope, Parent-Handoff gelesen.
