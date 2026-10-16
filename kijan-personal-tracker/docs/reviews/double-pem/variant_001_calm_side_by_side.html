@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1">
+<title>Variant 1 — Calm Side-by-Side</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif; background: #1a1a1a; padding: 24px; }
+.label-tag { color: #A0A0A0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; padding-left: 4px; }
+.phone {
+  width: 375px; height: 760px; margin: 0 auto;
+  background: #121212; border-radius: 32px;
+  padding: 24px 20px; border: 1px solid #2a2a2a;
+  overflow: hidden; display: flex; flex-direction: column; gap: 14px;
+}
+h1 { color: #E0E0E0; font-size: 22px; font-weight: 600; }
+.subtitle { color: #A0A0A0; font-size: 14px; margin-bottom: 12px; }
+.row { display: flex; gap: 10px; }
+.chip {
+  flex: 1; height: 40px; background: #1E1E1E; border: 1px solid #333;
+  border-radius: 12px; color: #5C9BFF; font-size: 13px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.chip .date { color: #E0E0E0; font-weight: 500; }
+.card {
+  background: #1E1E1E; border: 1px solid #2a2a2a; border-radius: 16px;
+  padding: 16px;
+}
+.card-title { color: #A0A0A0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+.energy-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.energy-val { color: #E0E0E0; font-size: 24px; font-weight: 600; }
+.energy-bar { height: 6px; background: #2a2a2a; border-radius: 3px; overflow: hidden; }
+.energy-bar-fill { height: 100%; background: linear-gradient(90deg, #4CAF50, #5C9BFF); width: 65%; }
+.envelope-text { color: #4CAF50; font-size: 13px; margin-top: 8px; }
+.risk-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.risk-label { color: #FFB74D; font-size: 16px; font-weight: 600; }
+.risk-meta { color: #A0A0A0; font-size: 13px; line-height: 1.6; }
+.risk-meta .down { color: #FF6B6B; }
+.symptom-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 14px; color: #E0E0E0; }
+.symptom-dots { letter-spacing: 2px; color: #5C9BFF; }
+.symptom-val { color: #A0A0A0; font-size: 13px; }
+.insight { color: #A0A0A0; font-size: 14px; line-height: 1.5; padding: 10px 12px; background: #181818; border-radius: 10px; border-left: 3px solid #5C9BFF; }
+.btn {
+  margin-top: auto; height: 52px; background: #5C9BFF; color: #121212;
+  border: none; border-radius: 12px; font-size: 16px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+}
+</style>
+</head>
+<body>
+<div class="label-tag">Variant 1 · calm side-by-side · envelope + risk</div>
+<div class="phone">
+  <div>
+    <h1>Double PEM</h1>
+    <div class="subtitle">Zwei Zeiträume vergleichen</div>
+  </div>
+  <div class="row">
+    <div class="chip">A · <span class="date">28.09.</span></div>
+    <div class="chip">B · <span class="date">27.09.</span></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Energie</div>
+    <div class="energy-row"><span class="energy-val">65%</span><span class="envelope-text">Innerhalb der Envelope ✓</span></div>
+    <div class="energy-bar"><div class="energy-bar-fill"></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">PEM-Risiko</div>
+    <div class="risk-row"><span class="risk-label">● Leicht erhöht</span><span style="color:#A0A0A0;font-size:13px;">35</span></div>
+    <div class="risk-meta">HRV <span class="down">↓12%</span> · Schritte 87%<br>Erholung: ~48h</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Symptome</div>
+    <div class="symptom-row"><span>Fatigue</span><span><span class="symptom-dots">●●●●○○</span> <span class="symptom-val">4/10</span></span></div>
+    <div class="symptom-row"><span>Brain Fog</span><span><span class="symptom-dots">●●●○○○</span> <span class="symptom-val">3/10</span></span></div>
+    <div class="symptom-row"><span>Schmerz</span><span><span class="symptom-dots">●●○○○○</span> <span class="symptom-val">2/10</span></span></div>
+  </div>
+  <div class="insight">Hinweis: Mehr Schritte am Vortag korrelieren mit HRV-Abfall heute.</div>
+  <button class="btn">Symptome erfassen</button>
+</div>
+</body>
+</html>

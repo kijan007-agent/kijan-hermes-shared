@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=375, initial-scale=1">
+<title>Variant 3 — Dashboard Card</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif; background: #1a1a1a; padding: 24px; }
+.label-tag { color: #A0A0A0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; padding-left: 4px; }
+.phone {
+  width: 375px; height: 760px; margin: 0 auto;
+  background: #121212; border-radius: 32px;
+  padding: 22px 20px; border: 1px solid #2a2a2a;
+  display: flex; flex-direction: column; gap: 14px;
+}
+h1 { color: #E0E0E0; font-size: 20px; font-weight: 600; }
+.subtitle { color: #A0A0A0; font-size: 13px; margin-bottom: 8px; }
+.compare-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mini-card {
+  background: #1E1E1E; border: 1px solid #2a2a2a; border-radius: 14px;
+  padding: 12px;
+}
+.mini-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.mini-tag { color: #5C9BFF; font-size: 11px; font-weight: 600; }
+.mini-date { color: #A0A0A0; font-size: 11px; }
+.mini-risk { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.risk-medium { color: #FFB74D; }
+.risk-ok { color: #4CAF50; }
+.mini-meta { color: #A0A0A0; font-size: 11px; line-height: 1.4; }
+.main-card {
+  background: #1E1E1E; border: 1px solid #2a2a2a; border-radius: 16px;
+  padding: 16px;
+}
+.head-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.title-block .label { color: #A0A0A0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+.title-block .verdict { color: #E0E0E0; font-size: 18px; font-weight: 600; margin-top: 2px; }
+.head-row .badge {
+  background: #FFB74D22; color: #FFB74D; padding: 4px 10px;
+  border-radius: 999px; font-size: 12px; font-weight: 600;
+}
+.ring-wrap { display: flex; justify-content: center; padding: 8px 0 12px; }
+.ring-svg text { font-size: 18px; font-weight: 700; fill: #E0E0E0; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.chip-soft {
+  background: #181818; border: 1px solid #2a2a2a; border-radius: 8px;
+  padding: 6px 10px; font-size: 11px; color: #A0A0A0;
+}
+.chip-soft strong { color: #FF6B6B; font-weight: 600; }
+.insight-card {
+  background: linear-gradient(135deg, #5C9BFF18, #4CAF5018);
+  border: 1px solid #5C9BFF44; border-radius: 14px; padding: 14px;
+}
+.insight-icon { color: #5C9BFF; font-size: 16px; margin-bottom: 6px; }
+.insight-body { color: #E0E0E0; font-size: 14px; line-height: 1.5; }
+.insight-foot { color: #A0A0A0; font-size: 11px; margin-top: 6px; }
+.btn {
+  margin-top: auto; height: 52px; background: #5C9BFF; color: #121212;
+  border: none; border-radius: 12px; font-size: 16px; font-weight: 600;
+}
+</style>
+</head>
+<body>
+<div class="label-tag">Variant 3 · dashboard card · insight-led</div>
+<div class="phone">
+  <div>
+    <h1>Double PEM</h1>
+    <div class="subtitle">Tag-vergleich</div>
+  </div>
+  <div class="compare-cards">
+    <div class="mini-card">
+      <div class="mini-head"><span class="mini-tag">A · heute</span><span class="mini-date">28.09.</span></div>
+      <div class="mini-risk risk-medium">● Leicht erhöht</div>
+      <div class="mini-meta">HRV ↓12% · 4 200 Schritte</div>
+    </div>
+    <div class="mini-card">
+      <div class="mini-head"><span class="mini-tag">B · gestern</span><span class="mini-date">27.09.</span></div>
+      <div class="mini-risk risk-ok">● Im Rahmen</div>
+      <div class="mini-meta">HRV normal · 2 250 Schritte</div>
+    </div>
+  </div>
+  <div class="main-card">
+    <div class="head-row">
+      <div class="title-block"><div class="label">PEM-Risiko</div><div class="verdict">35 / 100</div></div>
+      <span class="badge">● Leicht erhöht</span>
+    </div>
+    <div class="ring-wrap">
+      <svg width="140" height="140" viewBox="0 0 140 140">
+        <circle cx="70" cy="70" r="56" fill="none" stroke="#2a2a2a" stroke-width="10"/>
+        <circle cx="70" cy="70" r="56" fill="none" stroke="url(#g1)" stroke-width="10"
+                stroke-dasharray="123 352" stroke-linecap="round" transform="rotate(-90 70 70)"/>
+        <defs><linearGradient id="g1"><stop offset="0%" stop-color="#4CAF50"/><stop offset="100%" stop-color="#FFB74D"/></linearGradient></defs>
+        <text x="70" y="68" text-anchor="middle">35</text>
+        <text x="70" y="86" text-anchor="middle" font-size="10" fill="#A0A0A0">PEM</text>
+      </svg>
+    </div>
+    <div class="chips">
+      <span class="chip-soft">HRV <strong>↓12%</strong></span>
+      <span class="chip-soft">Schritte <strong>+87%</strong></span>
+      <span class="chip-soft">Ruhepuls <strong>+5</strong></span>
+    </div>
+  </div>
+  <div class="insight-card">
+    <div class="insight-icon">◆ Erkenntnismuster</div>
+    <div class="insight-body">Mehr Schritte am Vortag (B) korrelieren mit HRV-Abfall und erhöhter Fatigue heute (A).</div>
+    <div class="insight-foot">Erholung: ~48h · basierend auf 14 ähnlichen Tagen</div>
+  </div>
+  <button class="btn">Symptome erfassen</button>
+</div>
+</body>
+</html>
