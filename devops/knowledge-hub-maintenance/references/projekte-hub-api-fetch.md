@@ -64,6 +64,30 @@ Im Cron-Modus (`approvals.cron_mode` nicht auf `approve`) blockiert Tirith:
 ## Bekannte Fallstricke
 
 - `GET` auf `/api/ideas` mit `-I`/HEAD → 405 (erlaubt nur POST). Nutze GET mit Body-Abruf.
+- `GET /api/ideas/{id}` → **405 Method Not Allowed**. Einzelne Einträge nur über die Listenabfrage `GET /api/ideas` lesen.
 - `python3 -c` mit verschachtelten Quotes im Terminal-Output landet leicht in `<<ccr:...>>`-Kompression → Output in eine Datei schreiben und mit `read_file` lesen.
 - `sqlite3`-CLI ist nicht installiert → Python `sqlite3`-Modul nutzen.
 - `execute_code` ist im Cron-Modus blockiert → `terminal` + Python-Heredoc.
+
+## Schreibpfad: `PATCH` ignoriert Textfelder — `/edit` mit Form-Encoding
+Verifiziert 2026-10-21:
+
+| Endpoint | Body | Wirkt auf |
+|---|---|---|
+| `PATCH /api/ideas/{id}` | JSON | **nur** `phase`/`title` — `description`/`artifact_text` werden **stillschweigend ignoriert** (Antwort `{ok:true}`, Feld bleibt unverändert) |
+| `POST /api/ideas/{id}/edit` | JSON | HTTP **422** `body.title: Field required` |
+| `POST /api/ideas/{id}/edit` | **application/x-www-form-urlencoded** | **HTTP 200**, Antwort mit **leerem Body** (kein JSON) → immer per `GET /api/ideas` verifizieren |
+
+```python
+import urllib.parse, urllib.request
+body = urllib.parse.urlencode({"title": "...", "description": "...", "project": "jan-assistant"}).encode()
+req = urllib.request.Request("https://projekte.kijan.ch/api/ideas/15/edit", data=body, method="POST")
+req.add_header("Content-Type", "application/x-www-form-urlencoded")
+urllib.request.urlopen(req, timeout=30, context=ctx)   # leerer Body -> danach GET /api/ideas pruefen
+```
+
+## Board-Status ist nicht Runtime-Status
+Board-Einträge altern. Vor jeder Meldung „Blocker" den Live-Zustand messen:
+- **Auth/Gmail:** `POST oauth2.googleapis.com/token` + `GET gmail.googleapis.com/gmail/v1/users/me/profile` (Details im Skill `google-oauth-workflow`). Beispiel: `jan-assistant` #15 meldete seit 21.09.2026 einen toten Refresh-Token — am 21.10. war er nachweislich tot? Nein: Refresh → 200, Gmail → 200. Board-Eintrag war veraltet.
+- **Artefakte:** `os.path.exists()` auf den Pfad aus `artifact_text`. `kanban/workspaces/` kann inzwischen **vollständig entfernt** sein → verwaiste Referenzen (Beispiel `crypto-max` #56).
+- **Staging:** immer **Browser-User-Agent** setzen, sonst 403 (UA-Filter) statt des echten Zustands.
