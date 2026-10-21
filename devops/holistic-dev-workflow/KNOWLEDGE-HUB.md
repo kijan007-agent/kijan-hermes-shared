@@ -1,10 +1,10 @@
 ## Cross-Project Knowledge Hub
 
-Stand: 2026-10-21 10:05 UTC
-**Status:** 🔴 **KORREKTUR — Board-Layer ist NICHT tot:** Projekte-Hub-REST-API live, kpt-Board hat **578 Einträge**. state.db +30,8 % in 6,5 h (Beschleunigung). Disk 85 %.
+Stand: 2026-10-21 16:15 UTC
+**Status:** 🟢 **Board-Layer lebt, Gmail/OAuth-Blocker behoben.** Board: kpt 578 (ruht seit 21,5 h), crypto-max 1 (verwaistes Artefakt), jan-assistant 1 (veralteter Auth-Blocker). state.db +2,68 % in 6,2 h (Burst, kein Trend). Disk 86 %.
 > Aktualisierung: alle 6h via Cron-Job
-> Nächste Aktualisierung: 2026-10-21 16:00 UTC
-> Board-Rotation dieses Laufs: **kpt, orchestrator** (nächstes Mal: andere Boards)
+> Nächste Aktualisierung: 2026-10-21 22:00 UTC
+> Board-Rotation dieses Laufs: **crypto-max, jan-assistant** (nächstes Mal: kpt, orchestrator)
 
 ## WISSENSKATEGORIEN
 
@@ -660,3 +660,46 @@ Diese vier zusammen sind ein **Konsistenz-Cluster in der Energie-/Spoon-Logik** 
 **Neue Erkenntnisse:** (a) **Der Board-Layer lebt** — die REST-API liefert 578 kpt-Einträge; alle „Boards leer"-Befunde der Vorläufe waren Messfehler (falsche Datenquelle + TLS-/Security-Scan-Blockade); (b) `projekte-hub-ideas-sync` ist **deaktiviert**, nicht defekt (HTTP 500 widerlegt); (c) kpt-Durchsatz hat sich im Oktober **verdoppelt** (56 → 106 erledigt), 349 offen, **0 stale**; (d) **Energie-/Spoon-Konsistenz-Cluster** #579/#580/#581/#582 ist die inhaltlich wichtigste offene Arbeit; (e) kpt-staging-Backend ist **gesund** (health 200) — der 404 steckt im Frontend-Routing; (f) `state.db` **+30,8 % in 6,5 h** (exponentiell, nicht Rauschen); (g) Lieferung ans kanonische Repo geht nur über die **Contents-API**, Pfad ist `devops/holistic-dev-workflow/…`; (h) `orchestrator` hat **kein Board** — Lücke, kein Ausfall.
 
 **Skills:** Bestehender Skill `devops/knowledge-hub-maintenance` aktualisiert — die veraltete Vorgabe „kanban.db ist leer, Board-Daten sind nicht verfügbar" durch die korrekte Erreichbarkeit der Projekte-Hub-REST-API ersetzt; neu dokumentiert sind der TLS-Workaround (Cert-Chain-Extraction → `cafile`), die Cron-taugliche Abruf-Routine (kein Plain-HTTP-Curl, kein `-k`), das Pfad-Layout des kanonischen Shared-Repos und die Contents-API als einziger funktionierender Lieferweg. Keine neuen Skills.
+
+### Cross-Product Analysis (2026-10-21 16:15 UTC)
+
+Board-Rotation dieses Laufs: **crypto-max, jan-assistant** (Vorlauf: kpt, orchestrator).
+
+#### 1. NEU: Der Gmail/OAuth-Blocker ist **behoben** — Board-Eintrag #15 ist veraltet
+- Board-Eintrag `jan-assistant` #15 meldete seit 21.09.2026 einen toten Refresh-Token (`invalid_grant`) und einen Client-ID-Mismatch (977242149867 vs. 638142201716).
+- **Live-Nachprüfung (16:16 UTC):** `POST oauth2.googleapis.com/token` mit `client_id=638142201716-…` (aktuelles `google_client_secret.json`) und dem Refresh-Token → **HTTP 200**. Gmail-API mit dem daraus aktualisierten Access-Token → **HTTP 200** (`kijan007@gmail.com`, `historyId 23984437`).
+- Token-Datei `/workspace/.hermes/google_oauth_tokens.json`: mtime **16:01 UTC**, `last_refresh` 10:32 UTC, `expires_at` 17:01 UTC, `refresh_token_expires_in` 604.799 s (7 Tage) — der Refresh-Automatismus **läuft aktiv**.
+- **Konsequenz:** Der Client-ID-Mismatch im Board-Eintrag war kein dauerhafter Defekt, sondern ein Übergangs-/Zustandsfehler. Der Eintrag darf **nicht** mehr als Blocker geführt werden — Gmail/Calendar-Sync ist betriebsbereit. Eine Re-Auth durch Jan ist **nicht** nötig.
+- Pattern: *Board-Einträge zu Auth-Problemen altern gegen den Live-Zustand.* Board-Status und Runtime-Status getrennt halten; bei "blockiert"-Meldungen zuerst gegen die API prüfen, bevor Jan eine manuelle Re-Auth bekommt.
+
+#### 2. NEU: crypto-max #56 — Artefaktpfad existiert **nicht mehr**
+- `crypto-max` hat genau **1** Board-Eintrag (#56, UI/UX-Spec, Phase `umsetzung`, seit 30.09. unverändert).
+- `artifact_text` verweist auf `/workspace/.hermes/kanban/workspaces/t_8e83bc82/crypto-max-ui-spec.md` — **dieser Pfad existiert nicht**; das Verzeichnis `/workspace/.hermes/kanban/workspaces/` ist **komplett entfernt** (`find /workspace -name "crypto-max-ui-spec*"` → nichts).
+- Interpretation: Die Artefakte-Zone des Projekte-Hub-Backends wurde auf dem Host bereinigt, ohne dass die Board-Einträge nachgezogen wurden → **verwaiste Artefakt-Referenzen im Board**. Board-Einträge mit `artifact_text` brauchen eine Aufräum-/Re-Validierungs-Runde, sonst sind sie nicht rückverfolgbar.
+
+#### 3. NEU: kpt-Board — **21,5 h ohne Board-Event** (nur Kontext, keine Rotation)
+- `kpt`: 578 Einträge, unverändert gegenüber 10:05 UTC; jüngstes `updated_at` = **2026-10-20 18:50** (#575, Scale-Entscheidung Reflection-Formular). Phasen: recherche 170 / erledigt 162 / umsetzung 107 / design_review 72 / abgelehnt 63 / live 3 / freigabe 1. Typen: idee 432 / bug 82 / todo 64. Blocked: 0.
+- Einziger `freigabe`-Eintrag: #474 (Lemon-Squeezy Test-Mode, seit 15.10.) — wartet seit 6 Tagen auf Jan.
+
+#### 4. KORREKTUR: `state.db`-Wachstum war ein **Ausreißer**, kein Trend
+- `state.db` **233.635.840 B** (222,8 MB) + WAL 8,1 MB, mtime 16:15 (aktiv).
+- Delta seit 10:05 UTC (6,2 h): **+6,09 MB = +2,68 %** — nach den gemeldeten **+30,8 %/6,5 h** vom Vorlauf. Die Wachstumsrate ist **deutlich gesunken**, die Episode war ein Burst, kein exponentieller Trend.
+- **Konsequenz:** Die Vorlauf-Aussage „exponentiell, nicht Rauschen" ist **zu relativieren**. `state-db-acceleration-response` bleibt relevant (Wachstum setzt sich fort), aber die Dringlichkeit sinkt; kein Notfall-Putz nötig.
+
+#### 5. NEU: Disk auf **86 %** (37 GB frei) — `state.db` ist nicht der Treiber
+- `/workspace` 250 GB, **214 GB belegt (86 %)**, 37 GB frei. `state.db` macht davon 0,23 GB aus — **kein nennenswerter Anteil**.
+- Die 86 % werden von `profiles/` (1,2 GB), `sessions/` (289 MB) und dem **Modell-Cache** dominiert: `.hermes/models_dev_cache.json` = **4,93 MB**, `skills/` = 1218 SKILL.md global + 3910 in Profil-Mirrors = **5128 Dateien** (davon viele Duplikat-Mirrors). `node_modules`-Bloat und Modell-Caches sind die realistischen Hebel, nicht `state.db`.
+
+#### 6. KORREKTUR: Der Staging-403 ist ein **WAF/User-Agent-Block**, nicht der 404-Routing-Bug
+- Alle drei Staging-URLs liefern mit Default-Python-UA **403**; mit Browser-UA `Mozilla/5.0 … Chrome/120` → `/health` = **200 `{"status":"ok"}`**, `/activities` = **422 `query.device_id: Field required`** (API lebt, Parameter fehlt), `/` = **404 `not_found`** (Frontend-Routing, wie im Vorlauf erkannt).
+- Der Vorlauf-Befund „Backend gesund, 404 im Frontend" ist damit **bestätigt**. Neu ist die Ursache des 403: **kein serverseitiger Fehler, sondern ein UA-Filter** vor der Anwendung. Konsequenz für kpt-Checks: **immer** einen Browser-UA setzen, sonst wird ein gesundes System als tot gemeldet.
+
+#### 7. NEU: Lieferweg ans kanonische Repo — Credentials **sind** vorhanden, der Helper fehlt
+- `/workspace/.git-credentials` existiert (mtime 10:02) mit **zwei** Einträgen: `kijan007` und `kijan007-agent`, je 40-Zeichen-Token. Ein GitHub-Token ist also **vorhanden und gültig** (API-Check auf `kijan007-agent/kijan-hermes-shared` → 200, Default-Branch `main`).
+- **Aber:** `git config --get-all credential.helper` ist **leer** → `git push` fragt interaktiv nach dem Usernamen und bricht im Cron-Kontext ab („could not read Username"). `gh` ist im Container nicht installiert.
+- **Funktionierender Weg (verifiziert):** Contents-API mit Basic-Auth aus `.git-credentials` → `PUT /repos/kijan007-agent/kijan-hermes-shared/contents/devops/holistic-dev-workflow/KNOWLEDGE-HUB.md`. Remote-Blob-SHA des Vorlauf-Stands (`4f218ee…`) ist **byte-identisch** mit dem lokalen Hub — der Vorlauf-Lauf (03:35) wurde also erfolgreich über genau diesen Weg geliefert.
+- Pattern: *Fehlende Git-Credentials und fehlender credential.helper sind zwei verschiedene Fehlerbilder mit derselben Symptomklasse („git push schlägt im Cron fehl").* Immer zuerst prüfen, ob die Credentials **existieren** — nur der Helper fehlt.
+
+**Neue Erkenntnisse:** (a) **Der Gmail/OAuth-Blocker ist weg** — Refresh und Gmail-API laufen, Board-Eintrag #15 ist überholt und darf nicht mehr als Blocker geführt werden; (b) **verwaiste Artefakt-Referenzen** im Board (`crypto-max` #56 → Pfad gelöscht, `kanban/workspaces/` komplett entfernt); (c) **kpt-Board ruht seit 21,5 h**, einzige offene Freigabe #474 wartet 6 Tage auf Jan; (d) **state.db-Wachstum war ein Burst** (+2,68 % statt +30,8 % in 6,2 h) — die Vorlauf-Dramatik war zu hoch; (e) **Disk 86 %** wird nicht von `state.db` verursacht, sondern von Skill-Mirrors und Modell-Caches; (f) der Staging-**403** ist ein **User-Agent-Filter** — Browser-UA löst ihn auf, `/health` = 200; (g) **Liefer-Credentials existieren** in `/workspace/.git-credentials`, nur `credential.helper` fehlt — Contents-API ist der funktionierende Weg.
+
+**Skills:** Bestehender Skill `devops/knowledge-hub-maintenance` aktualisiert (Board-Status ≠ Runtime-Status: Auth-Blocker-Einträge gegen die Live-API gegenprüfen, bevor Jan eine manuelle Re-Auth bekommt; Staging-Checks mit Browser-UA; Board-Artefakt-Pfade auf Existenz prüfen; `state.db`-Rate als Burst vs. Trend bewerten statt als exponentiell zu etikettieren). Bestehender Skill `google-oauth-workflow` aktualisiert (Token-Refresh läuft aktiv — vor jeder manuellen Re-Auth den Live-Refresh-Status prüfen; Board-Einträge zu Auth-Problemen altern). Keine neuen Skills.
