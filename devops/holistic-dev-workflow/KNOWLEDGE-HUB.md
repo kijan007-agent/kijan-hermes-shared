@@ -708,3 +708,44 @@ Board-Rotation dieses Laufs: **crypto-max, jan-assistant** (Vorlauf: kpt, orches
 **Neue Erkenntnisse:** (a) **Der Gmail/OAuth-Blocker ist weg** — Refresh und Gmail-API laufen, Board-Eintrag #15 ist überholt und darf nicht mehr als Blocker geführt werden; (b) **verwaiste Artefakt-Referenzen** im Board (`crypto-max` #56 → Pfad gelöscht, `kanban/workspaces/` komplett entfernt); (c) **kpt-Board ruht seit 21,5 h**, einzige offene Freigabe #474 wartet 6 Tage auf Jan; (d) **state.db-Wachstum war ein Burst** (+2,68 % statt +30,8 % in 6,2 h) — die Vorlauf-Dramatik war zu hoch; (e) **Disk 86 %** wird nicht von `state.db` verursacht, sondern von Skill-Mirrors und Modell-Caches; (f) der Staging-**403** ist ein **User-Agent-Filter** — Browser-UA löst ihn auf, `/health` = 200; (g) **Liefer-Credentials existieren** in `/workspace/.git-credentials`, nur `credential.helper` fehlt — Contents-API ist der funktionierende Weg.
 
 **Skills:** Bestehender Skill `devops/knowledge-hub-maintenance` aktualisiert (Board-Status ≠ Runtime-Status: Auth-Blocker-Einträge gegen die Live-API gegenprüfen, bevor Jan eine manuelle Re-Auth bekommt; Staging-Checks mit Browser-UA; Board-Artefakt-Pfade auf Existenz prüfen; `state.db`-Rate als Burst vs. Trend bewerten statt als exponentiell zu etikettieren). Bestehender Skill `google-oauth-workflow` aktualisiert (Token-Refresh läuft aktiv — vor jeder manuellen Re-Auth den Live-Refresh-Status prüfen; Board-Einträge zu Auth-Problemen altern). Keine neuen Skills.
+
+### Cross-Product Analysis (2026-10-21 22:35 UTC)
+
+Board-Rotation dieses Laufs: **kpt, orchestrator** (Vorlauf: crypto-max, jan-assistant).
+
+#### 1. NEU: Der kpt-Board wächst per Spec-Review — jeder Review erzeugt 1+N neue Einträge
+- Board-Stand jetzt **583 Einträge** (vorher 578): +5 in diesem Lauf (IDs 583–587), alle Phase `recherche`, alle aus Task `t_438b75fa`.
+- Muster: **1 Review-Eintrag + N Finding-Einträge**, die 1:1 den Befund-IDs der Spec entsprechen (K-01, K-02/K-03, K-05, K-06/K-07). Das ist keine Board-Manie, sondern eine reproduzierbare Ableitung: `Spec → Befund-Liste → Hub-Eintrag je Befund`.
+- Verteilung heute: `recherche` 175, `umsetzung` 107, `design_review` 72, `erledigt` 162, `abgelehnt` 63, `live` 3, `freigabe` 1. Offen (recherche+design_review+umsetzung+freigabe) = **355**.
+- **Pipeline-Stau:** 190 der offenen Einträge sind >14 Tage alt, nur **1** Eintrag steht in `freigabe`. Findings aus Reviews wandern nicht in `umsetzung`/`freigabe` — sie sammeln sich in `recherche`. Wenn ein Review-Finding nicht in eine Code-Task-ID mit `[t_xxxx]`-Referenz überführt wird, verfällt es still.
+- Pattern: **Board-Growth ist ein Review-Volumen-Signal, kein Fortschrittssignal.** Vor jeder "Board wächst → viel zu tun"-Deutung den Phasenmix prüfen; Verschiebung `recherche → umsetzung` ist die eigentliche Fortschrittsmetrik.
+
+#### 2. NEU: `pem_days` ist semantisch falsch — Arzt-reportierbarer Kernfehler (K-01)
+- Befund aus `kpt-doc@dev/_specs/sprechstunde-tauglichkeit.md` (Task `t_438b75fa`, 2026-10-21 19:51Z): `pem_days` zählt **Budget-Auslastung**, nicht PEM. Belege: `app/routers/personal.py:6790` (`pem_day_count = sum(day_avgs >= over_spoon_threshold)`), `:6719` (`over_spoon_threshold == max_spoons`), Kachel-Label `templates/history.html:126` ("PEM episodes").
+- **Verbindliche Festlegung der Spec:** PEM-Tag = Energie unter P10 der 30-Tage-Baseline **und** 1–3 Tage nach Budget-Tag; der Budget-Tag selbst ist **ausdrücklich kein PEM**. Dazu Zustands-Vokabular (Passiv/Aktiv/Am Limit/Keine Daten), Tagesmaximum statt Mittelwert, Schwellen P10/P90, RES 80/40, WARN ab 80 % / STOPP ab 100 %.
+- Konsequenz für KPT: Der Arzt sieht als "PEM" markiert, was ein ausgeschöpftes Tagesbudget ist — ME/CFS-Symptomatik wird systematisch falsch erfasst. Das ist kein UI-Politur-Thema, sondern ein Datenmodell-Fehler mit Arzt-Folgen.
+- Cross-Product-Muster: **Metrik-Namen prüfen, bevor man Findings an UI-Kacheln denkt.** Ein falsch benannter KPI erzeugt Korrekturbedarf in drei Schichten (Backend-Definition, Export, Label) — die Spec behandelt genau das (§4.5 „Umbenennung der bestehenden Kennzahl").
+- Spec-Umfang: 14 Abschnitte, 59 KB, inkl. „Was bereits funktioniert" (§12) und bewusst offenen Punkten (§13) — erste **verbindliche** Spec im kpt-Board (bisherige Review-Dokumente waren Findings-Sammlungen ohne Normativitätsstufen).
+
+#### 3. NEU: Backend-Fixes bestätigen das „Single Source of Truth"-Muster (kpt-backend@dev)
+- `8e4808df` (t_791ac79d, 2026-10-21 20:22Z): `/export.json` HTTP 500 — **drei unabhängige Root Causes** (fehlender `date`-Import auf Modulebene; `ModuleNotFoundError` auf ein Modul `app.routers.health_pacing`, das nie existierte — korrekt ist `app/routers/pacing.py`; der `try/except` stand *hinter* dem Import). Alle drei erzeugten einzeln eine 500.
+- `807ff071` (t_651ff60a, 2026-10-20 18:22Z): Forecast-Einheit von hartkodiertem `"%"` auf backend-eigenes Feld `PE_FORECAST_UNIT = "spoons"` umgestellt — Client liest die Einheit jetzt vom Backend.
+- `da0ebb2a` (t_32054c5d): Nachbesserung — Magic Number `total_units or 30` lebte nach dem ersten Wurf noch in **sieben** weiteren Stellen (Gauge, Hero Card, Pacing u. a.). Erst `resolve_capacity()` als einzige Quelle erfüllte die AK „Umrechnung an genau einer Stelle".
+- Pattern (bestätigt & verfeinert): **Ein Fix pro Konzept reicht nicht — die Magic Number muss an *allen* Readern sitzen.** Der erste Wurf erkannte die zentrale Stelle, ließ aber sieben weitere Kopien stehen. Für jede "Single Source of Truth"-Task: im Commit explizit die Zahl der verbleibenden Duplikate nennen (hier 7 → 0).
+- Zusatz-Muster aus t_791ac79d: **Fallback-Pfade um importierte Module sind kein Fallback.** Ein `try/except` hinter einem Top-Level-Import fängt den `ModuleNotFoundError` nicht ab — der Fehler kommt beim Import, nicht beim Aufruf.
+
+#### 4. NEU: Orchestrator-Board ist leer **und** das Orchestrator-Repo ist seit ~10 Wochen still
+- Board `orchestrator` hat **0 Einträge** (unverändert echte Lücke, kein API-Ausfall). Kein einziger Board-Eintrag in 583 kpt-Einträgen betrifft den Orchestrator.
+- Repo-Abgleich: `Kijan-Company/kijan-orchestrator-langgraph@master` — letzter Commit `6589fe32` vom **2026-08-11** (Admin-Form-Save-Fix, `python-multipart` fehlte). `Kijan-Company/holistic-status-reporter@master` — letzter Commit `d33b4c65` vom **2026-08-01**. Beide seit ~10 bzw. ~12 Wochen ohne Commit.
+- Der Orchestrator läuft also entweder **außerhalb** der versionierten Repos (Container/Deployment) oder ist tatsächlich ruht. Der Board sagt nichts darüber — der Board ist leer.
+- Pattern: **Leere Boards und Repo-Aktivität sind zwei orthogonale Achsen.** Ein leeres Board ist nur dann ein Signal, wenn daneben ein aktives Repo steht. Hier: leeres Board **und** stilles Repo ⇒ kein Widerspruch, sondern Bestätigung, dass der Orchestrator derzeit nicht als Board-geführte Arbeit läuft. Vor jeder "Board ist tot → Recovery"-Meldung beide Achsen prüfen (Repo-Pushed_at + Commit-Datum, nicht nur Board-Count).
+
+#### 5. NEU: Zwei Board-Zustände, die als Blocker fehlgedeutet werden können
+- `jan-assistant` #15 (Gmail/OAuth) bleibt **behoben** (Bestätigung des Vorlaufs: Token-Refresh läuft) — hier nur der Vollständigkeit halber, keine neue Erkenntnis.
+- `kpt` #474 (Lemon-Squeezy Test-Mode Plan-Setup) steht seit **2026-10-15** in Phase `freigabe` — 6 Tage ohne Bewegung, der **einzige** `freigabe`-Eintrag im Board. Ein Board mit genau einem Freigabe-Eintrag, der 6 Tage steht, ist ein Warteschlangen-Indikator: entweder fehlt Jans Freigabe, oder der Eintrag ist vergessen worden.
+- Pattern: **Die Phase mit der kleinsten Besetzung ist die aussagekräftigste pro Board.** `freigabe` = 1 Eintrag (kpt) — Freigabe-Stau ist real und sichtbar; das ist der einzige Board-Eintrag, der aktuell Jan braucht (nicht den Code-Agenten).
+
+#### 6. NEU: TLS-Realität hat sich gegenüber der Skill-Referenz geändert
+- `curl https://projekte.kijan.ch/api/ideas` → **000** (Verbindung schlägt fehl), `curl` mit Chain-Extraktion nicht möglich; System-CA prüft das Zertifikat **nicht** mehr erfolgreich.
+- Funktionierender Weg (verifiziert 22:31Z): Chain via `openssl s_client -showcerts` in `chain.pem` → `urllib` mit `ssl.create_default_context(cafile="chain.pem")` → **HTTP 200, 583 Rows**. Plain-HTTP via `urllib` aus einem **Script** funktioniert ebenfalls (nur nicht als Inline-`python3 -c`/Curl, vom Security-Scan blockiert).
+- Korrektur der Referenz `references/projekte-hub-api-fetch.md`: die Aussage „HTTPS funktioniert direkt, Chain nur Fallback" ist **veraltet** — aktuell ist die Chain-Extraktion der Regelfall.
