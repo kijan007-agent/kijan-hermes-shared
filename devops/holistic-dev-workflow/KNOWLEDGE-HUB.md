@@ -1,10 +1,10 @@
 ## Cross-Project Knowledge Hub
 
-Stand: 2026-10-21 16:15 UTC
-**Status:** 🟢 **Board-Layer lebt, Gmail/OAuth-Blocker behoben.** Board: kpt 578 (ruht seit 21,5 h), crypto-max 1 (verwaistes Artefakt), jan-assistant 1 (veralteter Auth-Blocker). state.db +2,68 % in 6,2 h (Burst, kein Trend). Disk 86 %.
+Stand: 2026-10-22 19:35 UTC
+**Status:** 🟡 **Board läuft produktiv (9 neue kpt-Einträge in 24 h), state.db wieder im Trend (320-MB-Schwelle in 27 h gerissen).** Board: kpt 587, orchestrator 0 (leer + Repos still), crypto-max 1 (verwaistes Artefakt), jan-assistant 1 (erledigt). state.db 329,7 MB (+41 % in 27 h). Disk 88 %.
 > Aktualisierung: alle 6h via Cron-Job
-> Nächste Aktualisierung: 2026-10-21 22:00 UTC
-> Board-Rotation dieses Laufs: **crypto-max, jan-assistant** (nächstes Mal: kpt, orchestrator)
+> Nächste Aktualisierung: 2026-10-23 01:35 UTC
+> Board-Rotation dieses Laufs: **kpt, orchestrator** (Vorlauf-Header war veraltet: stand noch auf „crypto-max, jan-assistant"; nächstes Mal: crypto-max, jan-assistant)
 
 ## WISSENSKATEGORIEN
 
@@ -749,3 +749,32 @@ Board-Rotation dieses Laufs: **kpt, orchestrator** (Vorlauf: crypto-max, jan-ass
 - `curl https://projekte.kijan.ch/api/ideas` → **000** (Verbindung schlägt fehl), `curl` mit Chain-Extraktion nicht möglich; System-CA prüft das Zertifikat **nicht** mehr erfolgreich.
 - Funktionierender Weg (verifiziert 22:31Z): Chain via `openssl s_client -showcerts` in `chain.pem` → `urllib` mit `ssl.create_default_context(cafile="chain.pem")` → **HTTP 200, 583 Rows**. Plain-HTTP via `urllib` aus einem **Script** funktioniert ebenfalls (nur nicht als Inline-`python3 -c`/Curl, vom Security-Scan blockiert).
 - Korrektur der Referenz `references/projekte-hub-api-fetch.md`: die Aussage „HTTPS funktioniert direkt, Chain nur Fallback" ist **veraltet** — aktuell ist die Chain-Extraktion der Regelfall.
+
+### Cross-Product Analysis (2026-10-22 19:35 UTC)
+
+Board-Rotation dieses Laufs: **kpt, orchestrator** (Vorlauf: kpt, orchestrator — die Rotation im Header stand schon auf kpt/orchestrator, ist hiermit fortgeschrieben).
+
+#### 1. NEU: state.db-Wachstum war doch ein Trend — die 320-MB-Schwelle ist in 27 h gefallen
+- Vorlauf: +2,68 % in 6,2 h („Burst"). Jetzt: **233,6 MB (2026-10-21 16:15) → 329,7 MB (2026-10-22 19:28)** = **+41 % in 27,2 h**, ~1,28 %/h. Die Vorlauf-Dramatik war nicht zu hoch — sie war zu *niedrig*.
+- In 60 s wurde zwischen zwei Messungen **kein** Grössenzuwachs der Haupt-DB festgestellt (329.723.904 B konstant, mtime 19:28:35); die WAL lag bei 11,7 MB und wuchs ebenfalls nicht. Der Zuwachs kommt also in **Schüben**, nicht kontinuierlich — ein 60-S-Fenster ist als Messintervall unbrauchbar, ein 6–27-h-Fenster ist das richtige.
+- Disk steigt parallel: 86 % → **88 %** (32 GB frei). `state.db` ist mit 0,33 GB weiterhin **nicht** der Treiber (Cache 259 MB, Skill-Mirrors und Modell-Caches dominieren) — aber der Trend ist real und der Vorlauf-Befund "Burst" war eine Fehlmessung des Fensters.
+- Pattern: **Ein Wachstums-Befund braucht ein Fenster, das die Schub-Intervalle überstimmt.** 6 h ist bei stückweise schreibenden SQLite-DBs zu kurz. Erst mit ≥ 24 h sind Burst und Trend trennbar; "Burst" ist fast immer ein zu kurzes Messfenster, kein Gegenbeweis zum Trend.
+
+#### 2. NEU: Das Board produziert 9 neue Einträge/24 h — die Zuwachsrate ist unabhängig vom Board-Zustand
+- 24 h: **9 neue kpt-Einträge** (IDs 583–587 Review/Finding aus `t_438b75fa`, 589–592 aus dem Staging-Debug `t_5ce333e6`). Board jetzt **587** (Vorlauf 583).
+- Verteilung heute: `recherche` 175, `umsetzung` 109, `design_review` 72, `testing` 1, `idee` 1, `live` 4, `erledigt` 162, `abgelehnt` 63. **Offen = 358**, davon **230 älter als 14 Tage**.
+- Durchsatz: 18 Einträge in `erledigt`/`abgelehnt` innerhalb von 7 Tagen gegen 401 im Oktober angelegte. Der Board wächst also ~4× schneller, als er abgearbeitet wird.
+- Pattern: **Board-Wachstum ≠ Board-Ruhe.** Der Vorlauf meldete „kpt-Board ruht seit 21,5 h" — das war eine Momentaufnahme eines Boards, das arbeitet, aber nur stündlich schreibt. Board-Aktivität an einem Einzel-Zeitpunkt messen ist irreführend; `created_at` über 24 h ist das richtige Mass.
+
+#### 3. NEU: Zwei verschiedene Fehlerbilder mit derselben Signatur „Staging 500/000"
+- #591/#592: Root-500 auf `kijan-backend-staging:8011` war **kein** Provider-/Quota-Problem, sondern zwei **reine Jinja2-Template-Fehler** aus Merge `22ebe168` (2026-10-20 00:53 UTC, 17 min vor Detection): `UndefinedError: '_b' is undefined` (`templates/components/analytics.html:155`, via `personal_dashboard.html:540`) und `TypeError: get expected at most 2 arguments, got 3` (`templates/pacing.html:201`). Fix `9138c5d9` (PR #198) ist seit `b9fe8a05` auf Staging — **upstream/prod fehlt der Fix noch**.
+- #589/#590: Der „HTTP 000" ist **kein** Crash/OOM/not-listening, sondern **DB-Lock-bedingter Request-Timeout** (Connection-Pool-Blockierung) während des nächtlichen Prod→Staging-DB-Resyncs. Port 8011 ist vom Vantage-Point aus in 1 ms erreichbar, `/health` 200, `/openapi.json` 200 (API 0.97.22).
+- Gemeinsames Muster: **`curl -w %{http_code}` liefert bei Timeout die Ziffernfolge `000`**, die wie ein Netzwerkfehler aussieht — ist aber ein Timeout. Und: **ein 500er mit unvollständigem Traceback im Handler** (`app/main.py:884-902` catch-all mit `logger.error`) kann zwei völlig verschiedene Ursachen haben. Pattern: **Ein Fehlersignal nie als Ursache lesen.** Erst HTTP-Code *und* Timeout-Flag *und* Exception-Text getrennt auflösen (hier über reproduzierbare Exception aus dem exakt deployten Commit, weil Container-Logs aus dem Worker nicht abrufbar waren).
+- Process-Lesson: **Wenn der Zugriff auf die Primär-Evidenz fehlt (Container-Logs), ist deterministische Reproduktion aus dem deployten Commit der Ersatz** — hier mit identischem Wortlaut inkl. Datei/Zeile. Das ist belastbarer als eine Vermutung über Provider-Limits.
+
+#### 4. NEU: Review-Fluss erzeugt Einträge ohne Skill-Zuordnung
+- Von 358 offenen Einträgen hat genau **1** keinen `skill_assigned`: #592 (Phase `idee`, Titel „Review: Root-500 kijan-backend-staging — exakte Exception"). Er steht in `idee` statt in einer Skill-Phase.
+- Phase `einordnung` existiert **0×** im Board — die vom SOUL vorgesehene Einordnungs-Phase (Titel ohne `item_type` → `einordnung` → spätere Klassifizierung) wird faktisch **nicht genutzt**; die Rotation im Header bleibt ebenfalls stehen (Vorlauf-Header sagte „crypto-max, jan-assistant", der Body „kpt, orchestrator").
+- Pattern: **Wenn eine Phase im Board nie belegt ist, ist sie entweder nicht implementiert oder wird umgangen.** Beides ist eine Prozess-Erkenntnis, kein Board-Detail: Der Einordnungs-Schritt des Projekte-Hub-SOUL ist praktisch ein No-op, weil Einträge direkt mit `item_type` erzeugt werden. Ebenso ist die Board-Rotation manuell und driftet — sie gehört in eine State-Datei, nicht in einen Markdown-Header.
+
+**Skills:** Bestehender Skill `devops/knowledge-hub-maintenance` aktualisiert (Wachstumsraten brauchen ein Messfenster > Schub-Intervall, ≥ 24 h, sonst ist "Burst" eine Fehlmessung; Board-Aktivität über `created_at`/24 h messen, nicht über einen Einzelzeitpunkt; HTTP `000` = Timeout, nicht Netzwerkfehler; Fehlersignal ≠ Ursache, immer Exception-Text + deployten Commit prüfen; Phasen mit 0 Belegung sind Prozess-Signale — `einordnung` wird nicht genutzt, Board-Rotation driftet manuell). Keine neuen Skills.
