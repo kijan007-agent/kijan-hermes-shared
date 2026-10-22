@@ -184,8 +184,15 @@ When changes detected → report:
 ## Cross-Product Divergence Signals
 When KNOWLEDGE-HUB.md reports feature branch divergence, load `references/feature-branch-divergence-pattern.md` for threshold table and action mapping. Key signal: feature branch leading ALL products by >50 files = active parallel development requiring sync evaluation.
 
+## Measurement Windows (Lesson 2026-10-22)
+- **Growth rates need a window longer than the write-burst interval.** SQLite `state.db` grows in bursts, not continuously: a 60 s measurement showed zero byte change while the 27 h window showed +41 %. A 6 h window classified the same file as "Burst, kein Trend" and was wrong. Use ≥ 24 h for growth-rate claims and never label a short-window flat spot as "no trend" — write "burst vs. trend undetermined, window too short".
+- **Board activity is measured over `created_at`/24 h, not at a single point in time.** A board that looks idle at 16:00 can have created 9 entries in the preceding 24 h. Report both: entries created per 24 h and open backlog with age buckets (>14 d).
+- **A phase with zero entries across the whole board is a process signal, not a board detail.** `einordnung` = 0 entries means the intake phase described in the SOUL is bypassed in practice; report it as such.
+- **Header metadata drifts from the body.** The rotation line and "Nächste Aktualisierung" in the header can contradict the last analysis section. Check both and correct the header in the same run.
+
 ## Related Skills
 - `references/projekte-hub-api-fetch.md` — Board-Daten aus der Projekte-Hub-REST-API holen (TLS-Chain-Extraction, cron-tauglich); **leere `kanban.db` ≠ leeres Board**
+- `references/staging-fault-signature-disambiguation.md` — HTTP 000 = Timeout, nicht Netzwerkfehler; ein 500-Signal kann mehrere Ursachen haben (Jinja2-Template-Fehler vs. DB-Lock-Pool-Blockierung)
 - `hermes-branch-watcher` — branch offset monitoring and drift detection
 - `task-claim-verification` — TASKS.md claim vs reality verification
 - `cron-reliability` — cron job patterns, workspace path conventions, **system maintenance patterns (Section 6)**, health thresholds
