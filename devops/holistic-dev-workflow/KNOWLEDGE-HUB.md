@@ -1,10 +1,10 @@
 ## Cross-Project Knowledge Hub
 
-Stand: 2026-10-22 19:35 UTC
-**Status:** 🟡 **Board läuft produktiv (9 neue kpt-Einträge in 24 h), state.db wieder im Trend (320-MB-Schwelle in 27 h gerissen).** Board: kpt 587, orchestrator 0 (leer + Repos still), crypto-max 1 (verwaistes Artefakt), jan-assistant 1 (erledigt). state.db 329,7 MB (+41 % in 27 h). Disk 88 %.
+Stand: 2026-10-23 01:45 UTC
+**Status:** 🟡 **Board läuft (6 neue kpt-Einträge in 24 h, alle devops/qa-Staging-Debug, alle am selben Tag geschlossen) — state.db-Wachstum ist zum Stillstand gekommen (329,7 → 329,3 MB in 6,3 h = −0,1 %): der „+41 % in 27 h“-Trend des Vorlaufs war ein abgeschlossener Burst, kein Trend.** Board: kpt 589, orchestrator 0 (leer), crypto-max 1 (Artefakt weiterhin fehlend), jan-assistant 1 (erledigt). state.db 329,3 MB. Disk 88 %.
 > Aktualisierung: alle 6h via Cron-Job
-> Nächste Aktualisierung: 2026-10-23 01:35 UTC
-> Board-Rotation dieses Laufs: **kpt, orchestrator** (Vorlauf-Header war veraltet: stand noch auf „crypto-max, jan-assistant"; nächstes Mal: crypto-max, jan-assistant)
+> Nächste Aktualisierung: 2026-10-23 07:45 UTC
+> Board-Rotation dieses Laufs: **crypto-max, jan-assistant** (Vorlauf: kpt, orchestrator — nächstes Mal: kpt, orchestrator)
 
 ## WISSENSKATEGORIEN
 
@@ -189,7 +189,7 @@ Tool | Einsatzgebiet | Produkt |
 Produkt | Tenant | Primäre Domäne | Berater | Status |
 |---------|--------|----------------|---------|--------|
 > ⚠️ **Historischer Snapshot (Stand 2026-07-26). Seit 2026-10-20 09:00 nicht mehr verifizierbar:** `KijanPersonalTracker` und `kijan-orchestrator` liegen im aktuellen Container **nicht mehr vor** (nur `KijanPersonalTracker-2` ohne `.git`). Diese Zeilen sind Kontext, **kein aktueller Status**.
-Produkt | Tenant | Primäre Domäne | Berater | Status |\n|||||||||||---------|--------|----------------|---------|--------|\n||||||||| Kijan Personal Tracker | kijan | Gesundheits-Tracking, ME/CFS, Schmerz | Med, Psych, Schmerz, ME/CFS | **ACTIVE** — kpt-backend **ON dev(5260991), 327 behind origin/dev** — kpt-app-ciq **HERMES(e73048a) v0.90.5 — 378 total** — Router Growth: personal **104KB** (-63KB ⚡), activities **94KB** (-41KB ⚡), projects **51KB** — **MASSIVE IMPROVEMENT** |
+Kijan Personal Tracker | kijan | Gesundheits-Tracking, ME/CFS, Schmerz | Med, Psych, Schmerz, ME/CFS | **ACTIVE (Snapshot 2026-07-26, nicht mehr verifizierbar)** — kpt-backend **ON dev(5260991), 327 behind origin/dev** — kpt-app-ciq **HERMES(e73048a) v0.90.5 — 378 total** |
 HAL Module | kijan | Health Aggregation Layer | Medical | **PHASE 2 DEGRADING** — services reduced: `activity_aggregation`, `integrity_check`, `pattern_detection` **GONE** — only `activity_ranking_engine` + `pacing_engine` remain |
 kijan-orchestrator-langgraph | kijan | LLM Orchestrator, Model Routing | Tech | **ACTIVE** — 134 total (22 py, 81 md) — docs cleanup — **STABLE** — v2.2.0 |
 EdgeTxSync | kijan | EdgeTX Radio Sync, Log Analysis | Embedded | **PR #122 MERGED** — backend-client-separation — 110 py — HEAD 3136f06 — **STABLE** |
@@ -304,7 +304,7 @@ me-cfs-patient | medizinisch | ✓ aktiv | Ja |
 ### Aktive Skills
 (alle Skills aus oben → unverändert)
 
-### Neue Erkenntnisse (2026-07-24 13:30)
+### Neue Erkenntnisse (2026-07-24 13:30) — Skill-Registry
 
 #### process_insights (CHANGED — MASSIVE STATE CHANGES)
 1. **kpt-backend NOW ON dev BRANCH:** Was DETACHED — now on dev (5260991) — 327 behind origin/dev — **CRITICAL STATE CHANGE** — **CHANGED**
@@ -779,3 +779,41 @@ Board-Rotation dieses Laufs: **kpt, orchestrator** (Vorlauf: kpt, orchestrator �
 - Pattern: **Wenn eine Phase im Board nie belegt ist, ist sie entweder nicht implementiert oder wird umgangen.** Beides ist eine Prozess-Erkenntnis, kein Board-Detail: Der Einordnungs-Schritt des Projekte-Hub-SOUL ist praktisch ein No-op, weil Einträge direkt mit `item_type` erzeugt werden. Ebenso ist die Board-Rotation manuell und driftet — sie gehört in eine State-Datei, nicht in einen Markdown-Header.
 
 **Skills:** Bestehender Skill `devops/knowledge-hub-maintenance` aktualisiert (Wachstumsraten brauchen ein Messfenster > Schub-Intervall, ≥ 24 h, sonst ist "Burst" eine Fehlmessung; Board-Aktivität über `created_at`/24 h messen, nicht über einen Einzelzeitpunkt; HTTP `000` = Timeout, nicht Netzwerkfehler; Fehlersignal ≠ Ursache, immer Exception-Text + deployten Commit prüfen; Phasen mit 0 Belegung sind Prozess-Signale — `einordnung` wird nicht genutzt, Board-Rotation driftet manuell). Keine neuen Skills.
+
+### Cross-Product Analysis (2026-10-23 01:45 UTC)
+
+Board-Rotation dieses Laufs: **crypto-max, jan-assistant** (Vorlauf: kpt, orchestrator — Rotation fortgeschrieben, nächster Lauf: kpt, orchestrator).
+
+#### 1. NEU: state.db-Wachstum ist zum Stillstand gekommen — der „+41 % in 27 h"-Burst war ein abgeschlossener Schub, kein Trend
+- Vorlauf: 233,6 MB (2026-10-21 16:15) → 329,7 MB (2026-10-22 19:28), +41 % in 27,2 h. Jetzt: **329,7 MB (2026-10-22 19:28) → 329,3 MB (2026-10-23 01:42)** = **−0,1 % in 6,3 h**. `messages` 124 987 → **127 049** (+2 062, +1,6 %), `sessions` konstant 1 213.
+- Ein **60-s-Fenster** ergab 0 Byte Zuwachs (DB 345 300 992 B konstant, WAL 11 659 632 B konstant) — konsistent mit dem 6,3-h-Fenster. Der Burst-Fenster-Befund des Vorlaufs ist damit **widerlegt**: 27 h gehören zur selben Schubserie, nach der Stagnation.
+- `dbstat`-Aufschlüsselung: `messages` 225,7 MB (69 %), `messages_fts_data` 40,9 MB, `system_prompts` 15,6 MB, 7 Message-Indizes zusammen ~41 MB. **Der Speicher sitzt in den Payloads, nicht in Logs/Indizes allein** — `messages` wächst mit dem Chat-Volumen (1 213 Sessions), nicht mit einem Log-Leak.
+- **Ablaufdatum:** `state-db-cleanup` triggert bei > 400 MB, `state-db-acceleration-response` bei > 500 MB bzw. > 1 MB/h über 4 h. Beide **nicht** erreicht (329,3 MB; 0 MB/h). Kein Cleanup nötig.
+- Pattern: **Ein Trend braucht zwei Messfenster unterschiedlicher Länge.** Ein 60-s-Fenster sieht Schübe nicht; ein 27-h-Fenster kann einen einzelnen abgeschlossenen Schub wie einen Trend aussehen. Erst der Vergleich zweier Fenster (kurz vs. lang) trennt „Schub" von „Trend" — und der Beweis ist der **Stillstand danach**, nicht die Wachstumsrate davor.
+
+#### 2. NEU: Das kpt-Board produziert 6 Einträge/24 h — alle 6 am selben Tag geschlossen (Vollständigkeitsmuster)
+- 24 h: **6 neue kpt-Einträge** (IDs 589–594), alle in Phase `erledigt`, alle aus **einem einzigen Vorgang** (Staging-Debug `t_5ce333e6` / QA-Smoke-Test): 4× `skill=devops`, 2× `skill=qa`. Board jetzt **589** (Vorlauf 587).
+- Durchsatz: 24 h → 6 Transitions nach `erledigt`/`abgelehnt`, 7 d → 24. Board-Bestand: offen 358 (unverändert zum Vorlauf), davon > 7 d alt **310** (Vorlauf 303), > 14 d alt **271** (Vorlauf 267).
+- **Kein einziger Eintrag steht in `freigabe`** (0 in der Gesamt-Historie) — bestätigt den Vorlauf-Befund: Findings wandern nicht in die Freigabe, sondern sammeln sich in `recherche` (175) und `umsetzung` (107).
+- **Phase `einordnung` = 0×** (unverändert), `idee` = 0×, `testing` = 0×. Die im SOUL vorgesehene Einordnungs-Phase ist ein No-op; Einträge entstehen direkt mit `item_type` (`idee` 443, `bug` 82, `todo` 64).
+- **107 der 589 Einträge haben gar keinen `skill_assigned`** (18,2 %) — und alle 107 sind geschlossen (`erledigt` 72, `abgelehnt` 35), d. h. **kein einziger offener Eintrag ohne Skill**. Der Vorlauf-Befund „1 offener Eintrag ohne Skill" (#592) ist damit **erledigt** — er wurde inzwischen auf `erledigt` gesetzt. Board-Hygiene ist besser als behauptet.
+- Offene Verteilung nach Skill: `kpt-backend` 73, `kpt-uiux-audit-workflow` 56, `ui-ux-designer` 27 — die Top-3 decken 44 % aller offenen Einträge ab.
+- Pattern: **Board-Wachstum ohne Bestandswachstum.** Der Bestand bleibt bei 358, weil Erzeugung und Abschluss im selben Lauf gekoppelt sind (ein Debug-Vorgang erzeugt 6 Einträge und schließt sie). Board-Größe misst damit **Durchsatz, nicht Aufgabenstau** — der Stau steckt ausserhalb des Boards (271 offene Einträge > 14 d, ohne Freigabe-Ziel).
+
+#### 3. NEU: Das Board erzeugt in Schüben von 40–110/Tag — die Rate ist ein Batch-Signal, kein kontinuierlicher Fluss
+- `created_at` je Tag: 2026-10-01 **110**, 2026-10-07 **70**, 2026-09-29 **79**, 2026-09-30 **58**, 2026-10-08 **43** … 2026-10-09 **1**. Dazwischen fast nichts.
+- Ältester Eintrag 2026-09-22, neuester 2026-10-22 — das Board umfasst genau **einen Monat** und ist dann offenbar in einen Wartungsmodus gefallen (403 Einträge im Oktober, davon 124 geschlossen).
+- Pattern: **Tagesraten des Boards sind Batch-Artefakte, keine Kapazitätsmessung.** Ein "9 Einträge/24 h"-Wert im Vorlauf war ein einzelner Batch-Durchlauf, kein Durchsatz. Board-Aktivität muss über ≥ 7 Tage gemittelt werden (hier: 70/7 d), sonst meldet man Batches als Raten.
+
+#### 4. crypto-max / jan-assistant: unverändert tot, aber der crypto-max-Artefakt ist jetzt **explizit bestätigt** fehlend
+- crypto-max: 1 Eintrag (`erledigt`, UI/UX Specification, Skill `ui-ux-designer`, unverändert seit 2026-10-21 17:26). Der im Vorlauf (2026-10-21 16:15) als „verwaist" markierte Artefaktpfad `/workspace/.hermes/kanban/workspaces/t_8e83bc82/crypto-max-ui-spec.md` ist **weiterhin nicht vorhanden**; `find /workspace` findet keine Datei `crypto-max-ui-spec*`, und das Verzeichnis `/workspace/.hermes/kanban/workspaces/` existiert **nicht mehr**. → Board-Eintrag `erledigt`, Artefakt **nie geliefert** (Phantom-Abschluss). Ein `erledigt` ohne Artefakt ist kein Abschluss.
+- jan-assistant: 1 Eintrag (`erledigt`, Google-OAuth re-auth, Skill `google-oauth-workflow`/email-calendar-sync). **Verifiziert:** `google_token.json` und `google_oauth_tokens.json` wurden **0,2 h** vor der Messung aktualisiert — der OAuth-Refresh läuft, der `oauth-refresh`-Cron (alle 30 min) arbeitet. Dieser Board-Eintrag ist berechtigt geschlossen.
+- **orchestrator hat weiterhin kein Board (0 Einträge)** — unverändert seit 2026-10-21. Das Produkt existiert im Container nicht; Board-Rotation dahin ist derzeit Leerlauf.
+- Pattern: **`erledigt` im Board und „Artefakt existiert" im Board sind zwei verschiedene Aussagen.** Phase `erledigt` muss gegen einen realen Pfad geprüft werden, sonst sammeln sich Phantom-Abschlüsse (crypto-max) neben echten (jan-assistant) in derselben Phase und sind nicht unterscheidbar.
+
+#### 5. Cron-Lage: der Aggregator läuft, der Workflow-Status-Report ist deaktiviert
+- `cross-project-knowledge-aggregator` (dieser Lauf) **enabled, every 360 m** — läuft also **6 h**, nicht 6 min. Der Header-Vermerk „Aktualisierung: alle 6h" stimmt.
+- `holistic-dev-workflow-status-report` (every 180 m) ist **deaktiviert** — kein konkurrierender Schreiber auf dieselbe Datei. Ebenso `projekte-hub-ideas-sync` (alle 2 h) deaktiviert; aktiv ist nur die **gated**-Variante (`29 * * * *`) plus `projekte-hub-focus-bridge` (minütlich).
+- **Kein Write-Konflikt-Risiko** auf KNOWLEDGE-HUB.md; das einzige Risiko wäre eine Parallel-Instanz des Aggregators.
+
+**Skills:** Bestehender Skill `devops/knowledge-hub-maintenance` aktualisiert (ein Trend braucht zwei Messfenster — kurz gegen lang, und der Beweis ist der Stillstand danach; Board-Tagesraten sind Batch-Artefakte, über ≥ 7 Tage mitteln; `erledigt` im Board ist nicht dasselbe wie „Artefakt existiert" — Phase gegen realen Pfad prüfen; offener Bestand ohne Skill-Zuordnung ist ein stärkeres Signal als geschlossener Bestand ohne Skill). Keine neuen Skills.
