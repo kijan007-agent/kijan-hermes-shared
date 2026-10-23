@@ -190,6 +190,14 @@ When KNOWLEDGE-HUB.md reports feature branch divergence, load `references/featur
 - **A phase with zero entries across the whole board is a process signal, not a board detail.** `einordnung` = 0 entries means the intake phase described in the SOUL is bypassed in practice; report it as such.
 - **Header metadata drifts from the body.** The rotation line and "Nächste Aktualisierung" in the header can contradict the last analysis section. Check both and correct the header in the same run.
 
+## Measurement Windows (Lesson 2026-10-23)
+- **A trend needs TWO windows of different length, and the proof is the plateau afterwards.** A 27 h window showed +41 % on `state.db`; the next 6,3 h showed −0,1 %. Both were true — the burst had ended. Never infer a trend from one window's growth rate: compare a short window (60 s) against a long one (≥ 24 h) and, when they disagree, look for the plateau that follows before calling it a trend.
+- **Board day-rates are batch artefacts.** Creation counts cluster (110 / 79 / 70 / 58 / 43 entries on single days, near zero on the days between). A "9 entries/24 h" reading describes one batch run, not throughput. Average over ≥ 7 days (70 entries/7 d here) and report the batch structure explicitly.
+- **Board size measures throughput, not backlog.** When one debug run creates 6 entries and closes all 6 the same day, the open count stays flat (358) while new entries pile up. Report open backlog with age buckets separately from creation volume.
+- **`erledigt` in the board is not "the artefact exists".** Verify the artefact path on disk before trusting a closed phase (crypto-max: entry closed, artefact path never existed). Phantom completions sit next to real ones in the same phase and are indistinguishable without a path check.
+- **Check open backlog for missing `skill_assigned`, not closed entries.** All 107 skill-less kpt entries were closed; the open backlog had zero. Skill-less *open* entries are the actionable signal; skill-less closed entries are just history.
+- **Pipe-Noise can hide mid-line.** The corruption is not only `^\|{2,}` at line start: a table row was collapsed into one line with `|||||||||||` runs *inside* it. Check both `^\|{2,}` and `\|{5,}` anywhere in the file.
+
 ## Related Skills
 - `references/projekte-hub-api-fetch.md` — Board-Daten aus der Projekte-Hub-REST-API holen (TLS-Chain-Extraction, cron-tauglich); **leere `kanban.db` ≠ leeres Board**
 - `references/staging-fault-signature-disambiguation.md` — HTTP 000 = Timeout, nicht Netzwerkfehler; ein 500-Signal kann mehrere Ursachen haben (Jinja2-Template-Fehler vs. DB-Lock-Pool-Blockierung)
