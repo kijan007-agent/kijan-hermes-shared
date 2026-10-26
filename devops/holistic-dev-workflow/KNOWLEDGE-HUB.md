@@ -1,10 +1,10 @@
 ## Cross-Project Knowledge Hub
 
-Stand: 2026-10-26 04:45 UTC
-**Status:** 🟢 **Freigabe-Stau aufgelöst: #474 ist `live` (Phase `freigabe` wieder 0×). NEU: erste diktierte Direktinput-Einträge von Jan (#607–609, einer ohne Skill-Zuordnung, neue Phase `bug_gemeldet`). state.db moderat: +8,6 % in 68,7 h (~0,13 %/h, deutlich unter Accelerations-Schwelle).** Board: kpt 600 (44 neu/7 d), orchestrator 0 (3. Null in Folge → aus der Rotation nehmen), crypto-max 1, jan-assistant 1. state.db 357,6 MB. Disk 89 %.
+Stand: 2026-10-26 18:45 UTC
+**Status:** 🔴 **Delivery-Gap entdeckt: die Läufe 11:05 und 04:45 sind im kanonischen Repo `kijan007-agent/kijan-hermes-shared` (Branch `main`) NICHT angekommen — dort steht weiterhin Stand 04:45 UTC. Lokaler Hub-Commit `c726fab` (11:05) ist sauber, aber nicht ausgeliefert; gleiche Lücke im Skill (4 Insights fehlen). Board: kpt 603 (+1), jan-assistant 1, crypto-max 1, orchestrator 0, f3k 0, mecfs 0. state.db: kein Plateau — +3,97 MB/120 s in aktiver Phase, 0 im Leerlauf; 52 % des Content-Volumens (50,2 MB) steckt in diesem einen Hub-Job. Lokale `kanban.db`: 0 Tasks → Board-Quelle ist ausschliesslich die projekte-hub-REST-API.**
 > Aktualisierung: alle 6h via Cron-Job
-> Nächste Aktualisierung: 2026-10-26 04:40 UTC
-> Board-Rotation dieses Laufs: **kpt, orchestrator** (Vorlauf: crypto-max, jan-assistant —orchestrator nach 3× Null durch jan-assistant oder f3k/mecfs ersetzen)
+> Nächste Aktualisierung: 2026-10-27 00:45 UTC
+> Board-Rotation dieses Laufs: **kpt** (Vorlauf: kpt — orchestrator nach 5× Null endgültig gestrichen; alle anderen Boards leer → kpt-only)
 
 ## WISSENSKATEGORIEN
 
@@ -885,3 +885,74 @@ Board-Rotation dieses Laufs: **kpt, jan-assistant, crypto-max** (Vorlauf: kpt, o
 - **Pattern:** Ein deaktivierter Report-Cron ist die stille Ursache dafür, dass der Hub-Stand frischer ist als die `reports/`. Bei "Report veraltet"-Befunden immer zuerst `enabled` prüfen, bevor der Daten-Upload als Ursache gilt.
 
 **Skills:** Bestehender Skill `devops/knowledge-hub-maintenance` aktualisiert (Bulk-Migrationen an identischen `updated_at` erkennen; `idee` als echte Intake-Phase statt Parkplatz; read-only Lineage-/Review-Ergebnisse als eigene Eintragsklasse; `skill_assigned`-Namespace-Drift vor Coverage-Zählung deduplizieren; deaktivierter Report-Cron als Ursache stale Reports). Keine neuen Skills.
+
+### Cross-Product Analysis (2026-10-26 11:05 UTC)
+
+Board-Rotation dieses Laufs: **kpt** (Vorlauf: kpt, orchestrator — orchestrator nach 4× Null gestrichen; jan-assistant/crypto-max/f3k/mecfs alle leer → kpt-only).
+
+#### 1. NEU: Board-Flusstarrheit — 0 Einträge in 6,3 h (längste Pause seit dem Batch-Muster)
+- Kein einziger Eintrag mit `updated_at` > `2026-10-26T04:45`. Board 601 → **602** (nur #611 neu), offen 366 → **367** (+1), davon >14 Tage unverändert **218** (unverändert), >30 Tage 0.
+- Phasen kpt: `idee` 1 → **2** (#610, #611), `umsetzung` 116, `recherche` 177, `design_review` 72, `live` 4, `erledigt` 168, `abgelehnt` 63.
+- **Pattern:** Die Board-Zuwachsrate ist **schubweise, nicht kontinuierlich** — 44 Einträge/7 d im Mittel, aber 0 in einem 6,3-h-Fenster. Ein stilles Fenster ist **kein** Defekt-Indikator; erst die Kombination „0 Einträge + 0 Phasenwechsel + 0 `skill_assigned`-Vergaben" ist ein Befund.
+
+#### 2. NEU: #611 bestätigt die read-only Review-Klasse (#610) als Muster — jetzt mit Working-Tree-Drift
+- #611 `Review: Git-Inventur Working Tree (t_1b0a469b)`, Phase `idee`, **kein** `skill_assigned` — exakt dieselbe Signatur wie #610 (read-only Git-Inventur, Artefakt als Markdown in `kpt-doc@dev/docs/reviews/artifact-scan/`, verifizierte Commits, kein Ausführungswille).
+- Befunde: Branch `task/t_2ea7bcfd`, HEAD `a322348` (Haupt-Checkout, **19 Commits hinter origin/dev**), Working tree **DIRTY**: 6 modifizierte Submodule (**Gitlink-Drift**) + 144 untracked (139 `.worktrees/`, 3 `t_*-wt/`, agent-Scratch, 1 fremdes Worklog), `git diff --stat` = 5 files / 5+ / 5−.
+- **Verdichtung:** #610 suchte Commits, #611 inventarisiert den Working Tree — beides sind **read-only Evidenz-Artefakte** ohne Skill-Zuordnung und ohne `umsetzung`-Absicht. Zwei aufeinanderfolgende Belegstücke derselben Klasse → die Klasse ist etabliert, nicht zufällig.
+- **Drift-Quantifizierung neu:** Gitlink-Drift (Submodul-Commit vs. Index) ist eine eigene Fehlerklasse — `git status --porcelain` meldet sie als „modifiziert", obwohl im Superprojekt **keine Datei** geändert wurde (5+/5− nur in den Submodulen). Vor jedem „Working Tree dirty"-Befund immer trennen: echte Datei-Änderung vs. Submodul-Gitlink-Drift vs. untracked Artefakte.
+
+#### 3. NEU: Disk-Druck endlich lokalisisiert — `/root/.hermes` (5,0 GB) + `/root/.npm` (382 MB), **nicht** `/workspace`
+- Vorlauf-Befunde („state.db ist nicht der Treiber", „Skill-Mirrors und Modell-Caches dominieren") waren **ungenau**: Der tatsächliche Treiber liegt in `/root/.hermes`, das der Vorlauf nicht vermessen hatte.
+- Aufschlüsselung: `backups` 829 MB (allein ein **829-MB-Zip** vom 2026-09-13, 13. Tag alt, `hermes-backup-2026-09-13-191610-e10fb3ba.zip`), `tools` 1,2 GB (chromium 602 MB, python 254 MB, node 223 MB, uv/tirith 80 MB), `profiles` 1,2 GB, `cache` 260 MB, `sessions` 290 MB, `hermes-agent` 289 MB, `state.db` 359 MB. Dazu `/root/.npm` 382 MB (`_cacache`).
+- **Messfehler-Hinweis:** `df` meldet **/ 93 % (4,4 GB frei)** und **/workspace 90 % (27 GB frei)** — zwei verschiedene Dateisysteme (`overlay` vs. `/dev/sdb`). Die Hub-Werte bisher (86–89 %) bezogen sich auf `/workspace`; der kritischere Wert ist `/` = **93 %**.
+- **Korrektur der Korrektur:** `state.db` liegt in `/root/.hermes` (und `/workspace/.hermes` — gleiche inode, Bind-Mount, identische Datei). Weil `state.db` dort liegt, war die Aussage „state.db ist nicht der Treiber" nie falsch, aber unvollständig: `state.db` ist **Teil** des Root-Treibers, nicht dessen Ursache.
+- **Beste Sofort-Aktion:** der 829-MB-Backup-Zip vom 13.09. ist der einzige Posten mit klarem Alter und Null-Nutzen für den laufenden Betrieb → ~1,4 % der Root-Füllung. `npm cache` (382 MB) ist der zweite, ebenfalls gefahrlos löschbar.
+
+#### 4. state.db: 359,6 MB, Plateau bestätigt (0,0 MB in 2 min, −3,1 MB vs. Vorlauf-Wert)
+- Der Vorlauf nannte 362,7 MB; aktuell 359,6 MB (inkl. WAL 11,1 MB) → **−3,1 MB**, also leicht rückläufig. Zwei Minuten Live-Messung: **0,0 MB** — Schreibleise-Pause.
+- Bewertung: Die 357,6 → 362,7 → 359,6 MB-Folge über ~12 h ist Rauschen um eine stabile ~360-MB-Platte. **Kein Trend, kein Cleanup.** Schwellen 400 MB (Cleanup) / 500 MB (Acceleration-Response) bleiben ~1,5 bzw. ~4 Wochen entfernt.
+
+#### 5. Cron-Lage unverändert, aber mit neuem Detail: `projekte-hub-ideas-sync` (der synchrone 2-h-Job) ist **deaktiviert mit HTTP-500-Fehlerstand**
+- `cross-project-knowledge-aggregator` (dieser Job, 360 min): aktiv. `projekte-hub-ideas-sync-gated` (stündlich): aktiv. `projekte-hub-focus-bridge` (minütlich): aktiv. `holistic-dev-workflow-status-report` (180 min): **deaktiviert** (unverändert seit Vorlauf — erklärt weiterhin frischere Hub-Daten als `reports/`).
+- **NEU:** Der zweite, synchrone Sync-Job `projekte-hub-ideas-sync` (cron `24 6-20/2 * * *`) ist `enabled: False` **mit gespeichertem `last_error: RuntimeError: HTTP 500: Internal Server Error`**. Das Board läuft also nur über die gated-Variante (stündlich) und den minütlichen Focus-Bridge.
+- **Pattern:** Zwei Jobs mit derselben Aufgabe, davon einer mit 500-Fehlerstand deaktiviert — bei Board-Stillstand (Befund 1) immer beide Sync-Pfade prüfen, bevor man das Board selbst als Ursache verdächtigt.
+
+**Skills:** Bestehender Skill `devops/knowledge-hub-maintenance` aktualisiert (Board-Flusstarrheit vs. Defekt-Abgrenzung; read-only Evidenz-Klasse etabliert; Gitlink-Drift als eigene Fehlerklasse; Disk-Treiber in `/root/.hermes` + Dual-Filesystem-`df`-Fall; `state.db` als Teil des Root-Treibers). Keine neuen Skills.
+
+### Cross-Product Analysis (2026-10-26 18:45 UTC)
+
+**Board-Rotation:** kpt (Vorlauf: kpt — orchestrator nach 5× Null endgültig gestrichen, alle anderen Boards leer → kpt-only).
+**Board-Stand:** kpt **603** (+1 ggü. Vorlauf), jan-assistant 1, crypto-max 1, orchestrator 0, f3k 0, mecfs 0. Phasen kpt: recherche 177, umsetzung 116, design_review 72, erledigt 168, abgelehnt 63, live 4, **idee 3**.
+
+#### 1. NEU und wichtigste Erkenntnis: zwei aufeinanderfolgende Läufe waren lokal committed, aber **nie ausgeliefert** — Delivery-Gap im kanonischen Repo
+- Lokaler Stand `/workspace/.hermes/workflows/holistic-dev-workflow/KNOWLEDGE-HUB.md`: **Stand 2026-10-26 11:05 UTC**, Commit `c726fab` (04:45 → `20b515e` → `c726fab`), Working Tree sauber, `git status` leer.
+- Kanonisches Repo `kijan007-agent/kijan-hermes-shared`, Branch `main`, Pfad `devops/holistic-dev-workflow/KNOWLEDGE-HUB.md`: **Stand immer noch 2026-10-26 04:45 UTC**, Blob-SHA `10b0d724f42ab6b91a4e9f4c1508cb0e620da185`, 113,5 KB. Der 11:05-Lauf fehlt dort **vollständig**.
+- Gleiches Bild beim Skill: lokal `devops/knowledge-hub-maintenance/SKILL.md` (237 Zeilen) enthält 4 neue Insights, die im kanonischen `main` (233 Zeilen, SHA `27c84551…`) **fehlen** (Diff = 4 reine `>`-Zeilen, keine `<`-Zeilen → der kanonische Stand ist eine echte Teilmenge, kein Konflikt).
+- **Pattern:** „Board-Flusstarrheit" (Befund 1 der Vorläufe) war teilweise ein **Artefakt der Delivery-Kette**, nicht des Boards. Ein lokal grüner Commit-Status beweist **keine** Auslieferung. Der Vorlauf hat die Lücke nur für *seine eigene* Datei geprüft (Hub) und den Skill nicht gegengeprüft — die Lücke war also schon da und blieb bestehen.
+- **Regel (neu, hart):** Bei jeder Hub-Lieferung **beide** Dateien (Hub **und** Skill) gegen den kanonischen `main` verifizieren, nicht nur die, die man selbst anfasst. `git log` im lokalen Clone ist **kein** Lieferbeweis — der kanonische Remote (`kijan007-agent/kijan-hermes-shared`, Branch `main`) ist es. Lokale Clones `kijan007/kijan-hermes-shared-workflows` und `kijan007/kijan-hermes-shared-skills` existieren **nicht mehr** (404) und ihre `origin`-URLs sind tote pointers; `git push` dorthin ist unmöglich → Lieferung weiterhin **nur via GitHub Contents API** (`PUT /repos/{repo}/contents/{path}` mit bestehendem Blob-SHA), nicht via `git push`.
+
+#### 2. Board ist nicht eingefroren, sondern **langsamer**: 1 neuer Eintrag in 10 h — und die 3 `idee`-Einträge haben **alle drei keinen Skill**
+- Neueintrag **#612** (14:49 UTC, Phase `idee`): *„Reflog-Fenster t_baa0a8d8: keine Ref-Bewegung im Original-Lauf t_b760e611"*. Ergebnis: im Fenster 2026-10-25 21:55:03Z → 2026-10-26 00:40:12Z **keine** HEAD-/Ref-Bewegung im Superproject und in allen Submodulen — kein checkout, kein reset, kein commit, keine Branch-Anlage. Evidenz: `git reflog --all` (386 Einträge), grep über `.git/logs/HEAD`, 173 Worktrees, `.git/modules/*/logs/HEAD` → **0 Treffer**; `find .git -path '*logs*' -newermt …` → 0 Dateien.
+- **Neue Evidenzklasse: „negative Evidenz" (Abwesenheit als Befund).** Fehlende Ref-Bewegung ist eine belastbare Aussage *gegen* die Hypothese „der Agent hat geändert und es ist nicht gelandet" — sie belegt „der Lauf hat nie geschrieben". Das ist die sauberere Diagnose als „Artefakt fehlt".
+- Alle drei offenen Einträge ohne Skill-Zuordnung sind **Review-/Forensik-Einträge** (#610 Lineage-Branch-Commit-Suche, #611 Working-Tree-Git-Inventur, #612 Reflog-Fenster). Sie entstehen **nach** dem Skill-Routing, sind aber `phase: idee` statt `recherche`/`umsetzung` → vom Aggregator werden sie **nicht** weitergeschoben, bleiben also liegen. **Regel:** Read-only-Forensik-Einträge brauchen eine eigene Phase (`forensik`) oder eine explizite `skill_assigned`-Nennung, sonst sammeln sie sich als Altlast.
+
+#### 3. Artifact-Verifikation: privates Repo macht `raw.githubusercontent` unbrauchbar — 404 ≠ fehlend
+- Artefakt aus #611 (`docs/reviews/artifact-scan/2026-10-26-git-inventory.md`) **existiert**: `kijan007/KijanPersonalTracker`, Branch `dev`, 10 184 Bytes, Blob-SHA `036bb034a1…` — **aber nur mit authentifiziertem Contents-API-Aufruf**. Unauthentifiziert liefert `api.github.com` **404** *und* `raw.githubusercontent.com` **404** für dieselbe existierende Datei (Repo ist privat).
+- Damit war die Aussage des Vorlaufs („Artefakt-URL bestätigt fehlend") methodisch angreifbar: **404 beweist nur „nicht öffentlich", nicht „nicht vorhanden".** Korrekt ist: 404 ohne Token → **„nicht verifizierbar"**; erst 404 **mit** Token bzw. 404 im Repo-Baum-Scan → „fehlt".
+- Repo-Suche: `kijan007/KijanPersonalTracker` und `kijan007/kpt-doc` sind **privat** (unauth 404 / auth 200). `kijan007-agent/*` existiert für die KPT-Repos **nicht** (auth 404) → Repo-Owner-Wechsel, kein Namens-Tippfehler.
+
+#### 4. state.db: **kein Plateau — die „Plateau"-Messungen waren ein Messfehler**, Wachstum ist selbstverursacht
+- Vorlauf: „Plateau, 0,0 MB/2 min". Real gemessen in diesem Lauf: **+3,97 MB in 120 s** (403,2 → 407,2 MB, db+wal), danach im Leerlauf 300 s exakt **0**.
+- **Erklärung:** Das Wachstum ist **proportional zur eigenen Session-Aktivität**, kein Hintergrundleck. Die Meßfenster fielen in Leerlaufphasen und zeigten daher 0.
+- **Quantifizierung der Ursache:** `messages` enthält **145 033 Zeilen / 95,9 MB Content**, davon **141 305 / 94,1 MB aus Cron-Sessions**, und allein die **`cron_94993bbadbea_*`-Familie (dieser Hub-Job) 71 926 Nachrichten / 50,2 MB** — also **52 % des gesamten Content-Volumens** steckt in diesem einen Job. Top-Einzelsessions: `cron_email-sync-v2-pdf_20261022_080034` (8,8 MB), `…_20261021_080627` (6,5 MB).
+- **FTS-Amplifikation:** DB 379,5 MB bei nur 95,9 MB Content → FTS5-Index + `api_content`/`reasoning`-Duplikate ≈ **4×** Amplifikation (`messages_fts`, `messages_fts_docsize` je 140 305 Zeilen). Der **Content** wächst linear mit Sessions, der **Plattenbedarf** aber mit dem FTS-Index.
+- **Konsequenz für die Schwellen:** Die alte Skala (400 MB Cleanup / 500 MB Acceleration-Response) ist auf das *falsche* Objekt bezogen — bei linearem Content-Wachstum von ~50 MB pro Hub-Lauf (50,2 MB / ~40 Läufe seit 2026-10-21) ist 400 MB in **2–3 Tagen**, nicht in Wochen, erreicht. **Regel: Schwellen gegen Content-Masse (`sum(length(content))`) und Session-Zahl definieren, nicht gegen Dateigröße** — und Messfenster **müssen** eine aktive Phase treffen.
+
+#### 5. Die lokale Kanban-Schicht existiert faktisch nicht — `kanban_list` ist für Produkt-Boards unerfüllbar
+- `/workspace/.hermes/kanban.db` (die vom Gate genannte DB) hat `tasks` = **0 Zeilen**; `/workspace/.hermes/kanban/kanban.db` und `/workspace/kanban.db` sind **0-Byte-Dateien** (leer, keine Tabellen). Es existiert **kein** Verzeichnis `/workspace/.hermes/kanban/workspaces/` → der im Board-Eintrag #56 (crypto-max) genannte Pfad `…/workspaces/t_8e83bc82/crypto-max-ui-spec.md` kann nicht existieren (erneut bestätigt: Datei fehlt, `/workspace/.hermes/kanban/workspaces/` fehlt komplett).
+- **Konsequenz:** Für Produkt-Boards ist die **projekte-hub-REST-API die einzige Board-Quelle**; `kanban_list` liefert strukturell nichts. Ein Auftrag „hole kanban_list für Board X" ist gegen die leere lokale DB nicht erfüllbar und darf nicht als „Board leer" interpretiert werden — das ist die Wurzel der wiederholten „0 Boards"-Fehlbefunde in den Vorläufen. **Regel:** lokale `kanban.db` als Board-Quelle **nicht** verwenden, bevor `count(*) from tasks` > 0 geprüft ist.
+
+#### 6. Disk: unverändert 93 % / 90 % — `/root/.hermes` bleibt der Treiber, ohne Neuheit
+- `/` overlay 93 % (54 G belegt), `/workspace` 90 % (224 G/250 G). `/root/.hermes/backups` 830 MB (davon ein **829-MB-Zip vom 2026-09-13**, alt und ein Einzelartefakt), `/root/.npm` 382 MB. state.db 379,5 MB + 11,1 MB WAL. Keine neue Erkenntnis gegenüber dem Vorlauf — **kein Handlungsbedarf aus diesem Lauf**.
+
+**Skills:** Bestehender Skill `devops/knowledge-hub-maintenance` aktualisiert (Delivery-Gap als eigene Fehlerklasse: lokaler Commit ≠ Lieferung, kanonischer `main` ist der Lieferbeweis, beide Artefakte prüfen; 404-vs-privat-Repo-Disambiguierung für Artifact-Checks; negative Evidenz („keine Ref-Bewegung") als Befundklasse; `kanban.db` als Board-Quelle nur nach `count(*)`-Prüfung; state.db-Schwellen gegen Content-Masse statt Dateigröße; eigene Hub-Session als Haupttreiber der DB-Masse). Keine neuen Skills.
