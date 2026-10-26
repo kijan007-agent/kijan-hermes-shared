@@ -1,10 +1,10 @@
 ## Cross-Project Knowledge Hub
 
-Stand: 2026-10-23 01:45 UTC
-**Status:** 🟡 **Board läuft (6 neue kpt-Einträge in 24 h, alle devops/qa-Staging-Debug, alle am selben Tag geschlossen) — state.db-Wachstum ist zum Stillstand gekommen (329,7 → 329,3 MB in 6,3 h = −0,1 %): der „+41 % in 27 h“-Trend des Vorlaufs war ein abgeschlossener Burst, kein Trend.** Board: kpt 589, orchestrator 0 (leer), crypto-max 1 (Artefakt weiterhin fehlend), jan-assistant 1 (erledigt). state.db 329,3 MB. Disk 88 %.
+Stand: 2026-10-26 04:45 UTC
+**Status:** 🟢 **Freigabe-Stau aufgelöst: #474 ist `live` (Phase `freigabe` wieder 0×). NEU: erste diktierte Direktinput-Einträge von Jan (#607–609, einer ohne Skill-Zuordnung, neue Phase `bug_gemeldet`). state.db moderat: +8,6 % in 68,7 h (~0,13 %/h, deutlich unter Accelerations-Schwelle).** Board: kpt 600 (44 neu/7 d), orchestrator 0 (3. Null in Folge → aus der Rotation nehmen), crypto-max 1, jan-assistant 1. state.db 357,6 MB. Disk 89 %.
 > Aktualisierung: alle 6h via Cron-Job
-> Nächste Aktualisierung: 2026-10-23 07:45 UTC
-> Board-Rotation dieses Laufs: **crypto-max, jan-assistant** (Vorlauf: kpt, orchestrator — nächstes Mal: kpt, orchestrator)
+> Nächste Aktualisierung: 2026-10-26 04:40 UTC
+> Board-Rotation dieses Laufs: **kpt, orchestrator** (Vorlauf: crypto-max, jan-assistant —orchestrator nach 3× Null durch jan-assistant oder f3k/mecfs ersetzen)
 
 ## WISSENSKATEGORIEN
 
@@ -817,3 +817,71 @@ Board-Rotation dieses Laufs: **crypto-max, jan-assistant** (Vorlauf: kpt, orches
 - **Kein Write-Konflikt-Risiko** auf KNOWLEDGE-HUB.md; das einzige Risiko wäre eine Parallel-Instanz des Aggregators.
 
 **Skills:** Bestehender Skill `devops/knowledge-hub-maintenance` aktualisiert (ein Trend braucht zwei Messfenster — kurz gegen lang, und der Beweis ist der Stillstand danach; Board-Tagesraten sind Batch-Artefakte, über ≥ 7 Tage mitteln; `erledigt` im Board ist nicht dasselbe wie „Artefakt existiert" — Phase gegen realen Pfad prüfen; offener Bestand ohne Skill-Zuordnung ist ein stärkeres Signal als geschlossener Bestand ohne Skill). Keine neuen Skills.
+
+### Cross-Product Analysis (2026-10-25 22:40 UTC)
+
+Board-Rotation dieses Laufs: **kpt, orchestrator** (Vorlauf: crypto-max, jan-assistant).
+
+#### 1. NEU: Erste direkt von Jan diktierte Board-Einträge — und die neue Phase `bug_gemeldet`
+- kpt-Board 589 → **600** Einträge. Drei Einträge (#607, #608, #609) sind **Rohtexte aus Jans Sprachdiktion** ("Das ist total verwirrend und die Hälfte funktioniert nicht"), keine Agent-Reviews:
+  - #607 `bug` **Phase `bug_gemeldet`** (neu im Board — diese Phase gab es zuvor 0×): Editierfunktion/Userflow Aktivitäts-Dialog (Übernehmen/Speichern/Split kaputt).
+  - #608 `idee`: Feedbackmetriken kpt-app-ciq — Vorgabewert wählbar (letzter Wert vs. fix), letzter Wert soll Default sein.
+  - #609 `idee` (heute 09:36Z): Symptom-Tracking — Zeit + Schweregrad als fix verankerte Kopfzeile, Scrollen nur für Rest.
+- #607/#608 haben **keinen `skill_assigned`** — erste OFFENE Einträge ohne Skill seit 2026-10-23 (der Vorlauf-Befund "kein offener Eintrag ohne Skill" ist damit überholt; Einträge aus Telegram-Diktion durchlaufen die Skill-Zuordnung nicht).
+- Pattern: **Diktierte Intake-Einträge sind eine neue Eintragsklasse** (free text, keine Artefakt-Referenz, keine Task-ID). Sie sind die einzigen Einträge, die echte Nutzer-Absicht tragen — vor Board-Analysen prüfen, ob neue Einträge Agent-Ableitungen (mit `[t_xxxx]`/Artefakt-Pfad) oder Jans Direktinput sind; Letztere haben Priorität und brauchen Skill-Zuordnung.
+
+#### 2. DER FREIGABE-STAU IST AUFGELÖST — #474 ist `live`
+- #474 (Lemon-Squeezy Test-Mode Plan-Setup) wurde am **2026-10-22 06:46Z** von `freigabe` nach **`live`** gesetzt. Phase `freigabe` ist wieder 0×. Der vom 21./22.10. gemeldete "einzige Freigabe-Eintrag, 6 Tage wartend" war korrekt und ist erledigt — keine Jan-Aktion mehr offen.
+- `live` jetzt 4 (war 3). Phasenmix kpt: recherche 175, umsetzung 107, design_review 72, erledigt 168, abgelehnt 63, idee 10, bug_gemeldet 1, live 4. Offen 354, davon >14 d **218** (Vorlauf 271) — erste sichtbare Abnahme des Altbestands.
+- `einordnung` bleibt 0× (unverändert No-op-Phase).
+
+#### 3. NEU: UX-Audit Schmerzpatient setzt das 1+N-Review-Muster fort — Findings jetzt in `idee` statt `recherche`
+- #595 (Briefing) + #596 (PIN-Login Review) + Findings #597–602 (PIN-01..06: 40-px-Button, fehlendes Label, i18n-DE fehlt, Screen-Announce, Recovery nur via Watch, Hilftext-Kontrast). Artefakte liegen versioniert in `kpt-doc@dev/docs/reviews/ux-audit-schmerzpatient/` mit raw-Link im Eintrag — vorbildlich referenziert.
+- Abweichung vom 21.10.-Muster: Diese Findings starten in Phase **`idee`** (10 Einträge in `idee`, vorher ~0), nicht in `recherche`. `idee` scheint als neuer Warteparkplatz für Review-Findings genutzt zu werden — dieselbe Versickerungsgefahr wie damals `recherche`.
+- Pattern: **Phase-Wanderung der Review-Findings beobachten** (`recherche` → `idee`): Wenn Findings die Phase wechseln, ohne in `umsetzung` anzukommen, ist der Stau nur umgezogen.
+
+#### 4. state.db: +8,6 % in 2,4 Tagen — moderater Trend, Schwelle weiter weg als gedacht
+- 329,3 MB (2026-10-23 01:42) → **357,6 MB (2026-10-25 22:24)** = +8,6 % über 68,7 h (~0,13 %/h) — deutlich unter der "+1 MB/h über 4 h"-Accelerations-Schwelle; Cleanup-Trigger >400 MB bei ~3,3 Tagen Rest bei gleicher Rate.
+- Disk 88 % → **89 %** (29 GB frei). Weiterhin nicht state.db-getrieben.
+- Pattern (bestätigt Vorlauf): Rate über 68-h-Fenster glättet die Schubserien; der 22.10.-"Trend" (+41 %/27 h) war wirklich ein Schub — die jetzige Rate liegt 10× darunter.
+
+#### 5. orchestrator: unverändert 0 Einträge — Board-Rotation dahin bleibt Leerlauf
+- Drittes aufeinanderfolgendes Mal 0 (Bestätigung des Musters vom 21.10.: leeres Board + stilles Repo). **Empfehlung an den nächsten Lauf: orchestrator aus der Rotation nehmen und stattdessen `jan-assistant` oder ein neues Board (z. B. f3k/mecfs) testen** — die Rotation kpt/orchestrator liefert nur noch die kpt-Hälfte.
+
+**Skills:** Bestehender Skill `devops/knowledge-hub-maintenance` aktualisiert (diktierte Direktinput-Einträge als neue Klasse mit Priorität und fehlender Skill-Zuordnung erkennen; Phase `bug_gemeldet` existiert jetzt; Findings-Parkplatz kann von `recherche` nach `idee` wandern — Stau-Monitoring phasenübergreifend führen; Board-Rotation sollte leere Boards nach 3 bestätigten Nullen aussetzen). Keine neuen Skills.
+
+### Cross-Product Analysis (2026-10-26 04:45 UTC)
+
+Board-Rotation dieses Laufs: **kpt, jan-assistant, crypto-max** (Vorlauf: kpt, orchestrator — orchestrator aus der Rotation genommen, wie vom Vorlauf empfohlen).
+
+#### 1. NEU: Der `idee`-Parkplatz ist binnen 6 h leer — Review-Findings laufen jetzt in `umsetzung` durch
+- Vorlauf-Befund war: "Findings starten in `idee` (10 Einträge), nicht in `recherche` — Stau nur umgezogen, Versickerungsgefahr." **Ergebnis 6 h später: die Pipeline funktioniert.** Phasen kpt: `idee` 10 → **1**, `umsetzung` 107 → **116** (+9), `recherche` 175 → **177** (+2), `bug_gemeldet` 1 → **0**, `design_review` 72 = unverändert, `live` 4 = unverändert, `erledigt` 168, `abgelehnt` 63 = unverändert. Board 600 → **601** Einträge.
+- Gewanderte IDs: #597–602 (PIN-01..06) + #607 (Aktivitäts-Editierfunktion) → `umsetzung`; #608 (CIQ-Defaultwerte) + #609 (Symptom-Tracking-Kopfzeile) → `recherche`. Alle drei Diktat-Einträge haben jetzt einen `skill_assigned` (#607 `kpt-backend`, #608 `kpt-app-ciq`, #609 `kpt-symptoms-app`).
+- **Pattern:** `idee` ist **kein** Parkplatz, sondern eine echte Intake-Phase — der Vorlauf-Befund "Stau umgezogen" war eine Momentaufnahme, kein Strukturdefekt. Phase-Migrationen im Stundenfenster prüfen, bevor ein Stau postuliert wird.
+
+#### 2. NEU: Neue Eintragsklasse — read-only Lineage-/Commit-Suche (#610)
+- #610 `Review: Lineage-Branch-Name-Commit-Suche t_d7bb61b0` (2026-10-26 04:24Z, Phase `idee`, **kein** `skill_assigned`, Ergebnis: 4 verifizierte Commit-Treffer, 0 Treffer für 5 gesuchte Lineage-IDs).
+- Abgrenzung zur Vorlauf-Klasse: **Diktierte Direktinput-Einträge** (#607–609, freier Text, echte Nutzer-Absicht) vs. **read-only Review-/Lineage-Artefakte** (#610, read-only Git-Suche, Ergebnisbericht). Letztere tragen keine Ausführungsabsicht → gehören **nicht** in `umsetzung`/`design_review`, sondern in eine reine Ergebnisphase. Aktuell einziger offener Eintrag ohne Skill (1 von 366) — **kein** Prioritätsfall, aber Konsistenz-Check für die Skill-Zuordnung.
+
+#### 3. NEU: Batch-Migrationen sind an identischen `updated_at` erkennbar
+- 12 Einträge (#595–602, #607–610) tragen `updated_at` = `2026-10-26T04:23:09.6…` bis `.77…` — **12 Einträge in derselben Sekunde**. Das ist kein 12× Einzelarbeit, sondern **ein Bulk-PATCH der Phasen/Skills**.
+- **Regel:** Phasenverschiebungen in einem Lauf immer über identische Sekunden-Timestamps erkennen. Sonst wird eine Batch-Migration als 12 parallele Bearbeitungen fehlinterpretiert und der Board-Durchsatz überschätzt.
+
+#### 4. Board-Lage: kpt ist das **einzige** Board mit Inhalt — jan-assistant und crypto-max sind ebenfalls leer
+- Verteilung über `GET /api/ideas` (603 Einträge gesamt): **kpt 601 (99,7 %)**, `jan-assistant` 1 (#15 OAuth re-auth, Phase `erledigt`), `crypto-max` 1 (#56 UI/UX-Spec, Phase `erledigt`).
+- Beide "anderen" Boards enthalten **je genau einen historischen, abgeschlossenen** Eintrag — kein offener Bestand, kein Writer. Damit ist nicht nur orchestrator (3× bestätigt 0), sondern die **gesamte Board-Schicht außer kpt dormant**.
+- **Konsequenz für die Rotation:** Nicht nur orchestrator streichen — `jan-assistant`/`crypto-max` liefern ebenfalls nichts. Sinnvolle Alternativen (f3k/mecfs/kijan-steuern) existieren im Hub **gar nicht erst** (nur 3 Projekte in der API). Empfehlung: Rotation auf **kpt-only** umstellen und andere Boards nur noch jährlich/bei Verdacht auf neues Board prüfen.
+
+#### 5. Open-Bestand: +12 offen, Alterungskurve bestätigt
+- Offen 354 → **366** (+12). Davon >14 Tage unverändert: 218 → **219** (+1). >30 Tage: **0** — der Bestand altert nicht, er wird nur nicht abgearbeitet (Zufluss ≈ Abfluss).
+- Board-Gesamt 601, `live` 4, `erledigt` 168, `abgelehnt` 63 — 28 % aller jemals angelegten Einträge sind erledigt, 10 % abgelehnt.
+
+#### 6. state.db: 357,6 → 362,7 MB (+1,4 % in 6,4 h) — Plateau bestätigt, kein Cleanup nötig
+- +5,1 MB über ~6,4 h ≈ **+0,11 %/h** — unverändert unter der Accelerations-Schwelle (+1 MB/h über 4 h). Cleanup-Trigger >400 MB bleibt ~3,5 Tage entfernt.
+- Disk 89 % → **88,9 %** (29,9 GB frei). WAL 11,7 MB.
+
+#### 7. Cron-Infrastruktur: Status-Report-Cron ist **aus**
+- `holistic-dev-workflow-status-report`: **enabled = False** (Intervall 180 min) — es werden derzeit **keine** Zustands-Reports erzeugt. `cross-project-knowledge-aggregator` (dieser Job, 360 min) läuft. `projekte-hub-ideas-sync-gated` (stündlich) und `projekte-hub-focus-bridge` (minütlich) laufen.
+- **Pattern:** Ein deaktivierter Report-Cron ist die stille Ursache dafür, dass der Hub-Stand frischer ist als die `reports/`. Bei "Report veraltet"-Befunden immer zuerst `enabled` prüfen, bevor der Daten-Upload als Ursache gilt.
+
+**Skills:** Bestehender Skill `devops/knowledge-hub-maintenance` aktualisiert (Bulk-Migrationen an identischen `updated_at` erkennen; `idee` als echte Intake-Phase statt Parkplatz; read-only Lineage-/Review-Ergebnisse als eigene Eintragsklasse; `skill_assigned`-Namespace-Drift vor Coverage-Zählung deduplizieren; deaktivierter Report-Cron als Ursache stale Reports). Keine neuen Skills.
