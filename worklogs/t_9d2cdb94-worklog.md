@@ -7,7 +7,7 @@ t_a6fcd671. Ausgangsfragen: (1) clientseitige Heartbeat-Rate-Limitierung, (2) Di
 soll Heartbeats als Stale-Signal behandeln und/oder Default-Runtime-Caps setzen,
 (3) Quota-gate-Flapping abfedern.
 
-Projekte-Hub: http://projekte.kijan.ch/ideas (Eintrag `Review: Dispatcher-Befund Lauf 59088`).
+- Projekte-Hub: http://projekte.kijan.ch/ideas/633 (Eintrag `Review: Dispatcher-Befund Lauf 59088`).
 Repository: kijan-hermes-shared (kanonisches Remote `push` = kijan007-agent/kijan-hermes-shared,
 Ziel-Branch `dev`).
 
@@ -59,9 +59,15 @@ Zwei Vorläufe (61523, 61541) crashten mit "model hit max output tokens" — die
 
 ## Dev-Integration
 
-- Commits: siehe `git log` in `.worktrees/t_9d2cdb94`; Task-ID `t_9d2cdb94` in beiden
-  Commit-Messages.
+- Commits: `a5e955d645916e7a387f0932a835c9bf1e97e687` ("docs(review): t_9d2cdb94 -- Dispatcher-Befund
+  Lauf 59088 (Heartbeat-Sturm, Runtime-Caps, Quota-Gate)") auf `origin/dev` geliefert
+  (Push `push HEAD:dev` erfolgreich, `git log push/dev` zeigt a5e955d).
 - Push-Ziel: `push` (= kijan007-agent/kijan-hermes-shared), Branch `dev` (kanonisch laut
   repos.json: `kanonisch_remote: push`, `basis_branch: dev`).
-- Projekte-Hub-Eintrag: http://projekte.kijan.ch/ideas/<id> (theme
-  "Prozess-/Sprint-Reviews 2026-10-27").
+- Projekte-Hub-Einträge (theme "Prozess-/Sprint-Reviews 2026-10-27"):
+  - Ankerpunkt Review: http://projekte.kijan.ch/ideas/633
+  - F-01 Heartbeat-Sturm: http://projekte.kijan.ch/ideas/634
+  - F-02 Default-Runtime-Cap: http://projekte.kijan.ch/ideas/635
+  - F-03 Quota-Gate-Flapping: http://projekte.kijan.ch/ideas/636
+  - F-04 Ready-Lane-Aushungerung: http://projekte.kijan.ch/ideas/637
+  - Datei (raw): https://raw.githubusercontent.com/kijan007-agent/kijan-hermes-shared/dev/docs/reviews/kpt/2026-10-27-dispatcher-befund-lauf-59088.md
