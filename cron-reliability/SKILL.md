@@ -16,19 +16,10 @@ TASKS.md tracks what SHOULD be done. Working tree + git history = actual state.
 
 | Path | Status | Use For |
 |------|--------|---------|
-| `/workspace/Github/KijanPersonalTracker-hermes/` | ✅ ACTIVE | All file operations, git commands |
-| `/workspace/Github/KijanPersonalTracker-feature/` | ✅ ACTIVE (feature branch) | Code inspection on feature branch |
-| `/workspace/Github/KijanPersonalTracker-prod-hotfix/` | ⚠️ UNKNOWN (post-wipe) | Last known: LEGACY. Verify before use. |
-| `/data/Github/` | ❌ NOT MOUNTED IN CRON | Cron sandbox — empty shells, use `/workspace/Github/` exclusively |
-| `/data/Github/KijanPersonalTracker-feature/` | ❌ WIPE (2026-06-07) | Zero commits, zero remotes — COMPLETELY WIPED. See COMPLETE REPO DELETION PATTERN. |
-| `/data/Github/KijanPersonalTracker-hermes/` | ❌ WIPE (2026-06-07) | Zero commits, zero remotes — COMPLETELY WIPED. See COMPLETE REPO DELETION PATTERN. |
-| `/workspace/Github/KijanPersonalTracker-feature/` | ❌ WIPE (2026-06-07) | Zero commits, zero remotes — COMPLETELY WIPED. |
-| `/workspace/Github/KijanPersonalTracker-hermes/` | ❌ WIPE (2026-06-07) + SUBMODULE WIPE (2026-06-08) | Zero commits. kpt-backend submodule also zero commits + no remote. |
-| `/workspace/Github/KijanPersonalTracker-feature/` | ❌ WIPE (2026-06-07) | Zero commits, zero remotes — COMPLETELY WIPED. |
-| `/workspace/Github/KijanPersonalTracker-prod-hotfix/` | ⚠️ UNKNOWN (post-wipe) | Last known: LEGACY. Verify before use. |
-| `/tmp/kpt-extract/source/` | ⚠️ UNKNOWN (post-wipe) | Was post-wipe .mc snapshot — verify existence. |
-| `/data/Github/KijanPersonalTracker-feature/` | ❌ EMPTY (2026-06-08) | Zero commits, zero remotes — wiped 2026-06-07. |
-| `/data/Github/KijanPersonalTracker-hermes/` | ❌ EMPTY (2026-06-08) | Zero commits, zero remotes — wiped 2026-06-07. |
+| `/workspace/Github/` | ✅ PRIMARY | All repos live here in active environments |
+| `/data/Github/` | ❌ NOT MOUNTED IN CRON | Cron sandbox — empty, never use |
+
+**Note:** Historical wipe entries and submodule paths have been consolidated into the COMPLETE REPO DELETION PATTERN section below. The table above is the current authoritative path map.
 ## Empty Repo Detection Pattern (2026-05-24)
 
 When cron job paths (`/data/Github/...`) return "File not found" or "Path not found":
@@ -165,6 +156,23 @@ When a project uses git submodules (e.g., kpt-app-ciq):
 5. When a file is in the submodule tree but not on disk: check if parent repo submodule pointer is stale
 6. **Critical**: Tasks referencing files in submodules MUST specify the submodule path explicitly, not just the parent repo path
 
+## Script Invocation Over Re-Implementation (2026-06-17)
+When a task matches an existing skill script's purpose, invoke the script directly instead of manually implementing:
+1. Check loaded skills for a matching `scripts/` file (e.g., `google-workspace/scripts/calendar_sync.py` for calendar sync)
+2. Read the script's SKILL.md to confirm it covers the exact use case
+3. Invoke with `python <skill-path>/scripts/<script>.py` — do NOT hand-type the equivalent logic
+4. Only implement manually when no existing script covers the case
+5. **Pitfall**: Cron instructions may describe a workflow that's already automated — always verify against available skills first
+
+## Knowledge Hub Maintenance (2026-06-17)
+The KNOWLEDGE-HUB.md is a cross-product knowledge aggregation file that requires periodic maintenance. Use the `knowledge-hub-maintenance` skill for this task:
+- Run fresh git checks before trusting KNOWLEDGE-HUB.md data
+- Check for stale file references (files deleted since last audit)
+- Check for duplicate sections and skill entries
+- Update timestamps and file counts
+- See `~/.hermes/skills/devops/knowledge-hub-maintenance/SKILL.md` for the full procedure
+- **Pitfall**: kanban-cli is NOT installed — kanban.db is empty. Always use `execute_code` for git checks
+
 ## Cross-Repo File Location Pattern (2026-05-24)
 When a prompt references files at a path that doesn't exist:
 1. Check the prompt path first (e.g., `/data/Github/...`)
@@ -233,8 +241,34 @@ When a prompt references files at a path that doesn't exist:
 ### Night Silence
 - No reports between 22:00 and 07:30. The 07:30 report includes night summary.
 
-## Linked Resources
+## Orphan Executions After a Gateway Restart (2026-11-03)
+
+A SIGTERM to the gateway kills the **running job agents** too, not just the gateway process. On 2026-11-02 21:55Z the gateway received a post-interrupt SIGTERM; the supervisor restart at 21:58Z terminated the active job agents, leaving **4 execution rows in `/root/.hermes/cron/executions.db` with status `unknown`** — no terminal state. The health check then reported green while the runs were already dead.
+
+Rule: after any gateway restart, query the executions DB for rows **without** a terminal state and set them to `failed` manually, then trigger catch-up runs. Never let a "jobs are running" check look only at the *active* rows — the failure mode is invisible to an active-rows-only check.
+
+```
+sqlite3 /root/.hermes/cron/executions.db \
+  "UPDATE executions SET status='failed' WHERE status IS NULL OR status='unknown';"
+```
+
+Root cause is often disk pressure rather than the SIGTERM itself: at the time of the incident the root filesystem was at **98 %** (7.4 G free of 58 G), with `state.db` at 729 MB (258 235 messages / 1 580 sessions) and a 382 MB npm cache. A full filesystem produces write errors and OOM/Systemd SIGTERMs — which then produce exactly these orphan rows. Check `df -h /` and the `state.db` size at the start of every cron run; clean the npm cache first (fast, safe), then `state.db`. Skills: `state-db-cleanup`, `devops/cron-state-db-cleanup`.
+
+## System Maintenance Patterns
+
+### System Health Thresholds (2026-07-17) (2026-07-17)
+| Metric | Normal | Warning | Critical | Action |
+|--------|--------|---------|----------|--------|
+| state.db | <300 MB | 300-400 MB | >400 MB | Vacuum + delete old sessions |
+| Knowledge Hub stale | <20 reports | 20-50 | >50 (100%) | Run stale-cleanup |
+| Checkpoints | <1,000 | 1,000-3,000 | >3,000 | Remove >30d stale |
+| node_modules | <30,000 | 30,000-35,000 | >35,000 | npm prune + review |
+| cron output | <500 files | 500-1,000 | >1,000 | Compress + archive |
+
+### Linked Resources
 - `references/submodule-file-checking.md` — Step-by-step submodule file detection flow
 - `references/cron-path-validation-pattern.md` — 3-layer validation for cron path resolution (exists → valid → content)
 - `references/post-wipe-extraction-fallback.md` — `/tmp/kpt-extract/source/` as post-wipe code fallback (2026-06-07)
 - `references/commit-to-task-mapping-pattern.md` — Map git commits to TASKS.md tasks via ancestry tracing
+- `references/ai-tool-config-proliferation.md` — 5+ AI config file types (.rooignore, .roorules, .clineignore, .clinerules, .claudeignore, .continueignore) across Kijan monorepo — affects file-count accuracy in cron jobs
+- `references/maintenance-thresholds.md` — System health thresholds and alert actions
