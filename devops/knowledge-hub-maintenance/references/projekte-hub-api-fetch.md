@@ -14,14 +14,20 @@ Ein leeres `kanban.db` bedeutet **nicht** "Board leer" und **nicht** "Board-Laye
 | `GET https://projekte.kijan.ch/api/ideas` | alle Boards, Feld `project` filterbar |
 | `GET https://projekte.kijan.ch/api/ideas` (POST only für Mutationen) | HEAD liefert 405 — Mutationen laufen über POST |
 
-Board-Namen: `kpt` (583 Einträge, aktiv), `jan-assistant` (1), `crypto-max` (1). `orchestrator` und `kpt-backend` haben **0 Einträge** — das ist eine echte Lücke, kein Ausfall. Stand 2026-10-21 22:31Z: kpt 583 (vorher 578 — +5 aus Task `t_438b75fa`, Sprechstunden-Spec).
+Board-Namen: `kpt` (690 Einträge, aktiv, max ID 714), `jan-assistant` (12), `crypto-max` (2), `f3k` (1). `orchestrator`, `kijan-orchestrator`, `kpt-app-ciq`, `mecfs` haben **0 Einträge** — das ist eine echte Lücke, kein Ausfall. Stand 2026-11-03 10:15Z: Gesamtbestand 705 Einträge über 4 Boards.
 
 ## Feldstruktur je Eintrag
 
 `id`, `title`, `description`, `phase`, `item_type`, `project`, `theme`, `skill_assigned`, `created_at`, `updated_at`, `last_validated_at`, `is_blocked`, `depends_on`, `priority`, `url`
 
-Phasen: `recherche`, `design_review`, `umsetzung`, `erledigt`, `abgelehnt`, `live`, `freigabe`.
+Phasen: `recherche`, `design_review`, `umsetzung`, `erledigt`, `abgelehnt`, `live`, `freigabe`, `testing`, `idee`.
 Typen: `idee`, `bug`, `todo`.
+
+**Phase `idee` (Stand 2026-11-03):** existiert zusätzlich und dient als **Sammelbecken** für Findings,
+die aus einem Review entstehen und noch nicht klassifiziert sind — nicht als Arbeits-Queue. Ein
+`idee`-Eintrag ohne `skill_assigned` bedeutet in der Regel: das Finding ist bereits gefixt und belegt,
+die Klassifizierung (→ `erledigt` + Skill) läuft nach. Beim Auswerten von Board-Zahlen `idee` separat
+ausweisen, sonst sieht ein Review-Burst (1 Review + N Findings in derselben Minute) wie ein Board-Stau aus.
 
 Zeitstempel sind **ISO-8601 mit Offset** (`2026-10-20T18:50:33.350046+00:00`), **keine Unix-Epochen** — `datetime.fromtimestamp()` liefert 1970 und verwirrt jede Alters-Auswertung.
 
