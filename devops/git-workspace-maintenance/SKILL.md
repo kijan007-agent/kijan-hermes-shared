@@ -185,6 +185,16 @@ Pattern: Parent repo branch shows submodule at commit `X`, but submodule HEAD is
 Fix: `cd <submodule> && git rev-parse HEAD` to get actual checked-out commit,
 then compare with `git show <parent-branch>:<submodule-path>` (returns 160000 commit <ref>).
 
+### Pitfall: "Push blocked / access missing" is usually the wrong repo or wrong remote name
+
+Symptom: a task is blocked because the push to the canonical remote fails, and the diagnosis drifts toward missing credentials or a missing token. In the recorded case (kpt Team-Klärung 2026-11-05, task `t_872184d4` / `t_mob_space`), the access was never the problem: `git push --dry-run` to `kijan007` exited 0. The blocked tasks worked in the wrong working tree (`/workspace/.hermes` = Hermes config repo instead of `kpt-backend`) and used a wrong remote name.
+
+Rules:
+- Before assuming an access problem, run the push probe: `git push --dry-run <canonical-remote> HEAD:refs/heads/probe` — exit 0 disproves the access hypothesis.
+- Then check the working directory (`pwd`, `git rev-parse --show-toplevel`) and `git remote -v`. A task that edits the wrong repo will also push to the wrong remote.
+- Write the corrected repo path, file paths and worktree command into the task body; a blocked task whose body still names the wrong repo will be re-blocked by the next instance.
+- Never "fix" access by adding credentials or keys — the container has no host SSH/Tailscale access by design; everything needed is inside `/workspace`.
+
 ### Pitfall: Container has no SSH auth for GitHub
 Container runs as root with no SSH agent and no GitHub PAT in environment.
 SSH keys from `/workspace/.ssh/` must be copied to `/root/.ssh/` and `~/.ssh/config` must set `IdentityFile`.
