@@ -148,6 +148,6 @@ meldete dem Gate nur `HEAD` → das Gate wertete „kein Code-Commit" und lehnte
 (`PREFLIGHT: FAIL`), obwohl der Code-Commit auf `origin/dev` integriert war.
 
 Fix in `scripts/kpt-deliver.sh`: es werden jetzt **alle** Commits mit Task-ID in der
-Message seit dem Ziel-Branch (`git log --format=%H -F --grep="$t" "$remote/$branch..HEAD"`)
+Message auf dem Ziel-Branch (`git log --format=%H -F --grep="$t" -n 50 "$remote/$branch"`)
 plus `HEAD` an `donegate-check.sh` übergeben. Danach: `OK: e595f525… auf origin/dev` →
 `PREFLIGHT: OK`.
