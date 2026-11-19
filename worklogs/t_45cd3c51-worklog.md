@@ -139,3 +139,15 @@ Nicht versioniert (Container-Laufzeitkonfiguration, kein Projektcode):
   (`fork: false`, kein `parent`). Die Lieferung deshalb direkt auf den laut Manifest
   kanonischen Remote `push` (`kijan007-agent/kijan-hermes-shared`, Ziel-Branch `dev`);
   ein PR gegen `kijan/kijan-hermes-shared` ist aus dem Container nicht erstellbar.
+
+## Zusatzbefund im selben Lauf: Gate sah nur HEAD (K11-Falle)
+
+Bei der ersten `kpt-deliver.sh`-Ausführung in diesem Lauf war der letzte Commit der
+reine Worklog-Commit (`21ab74cf`), der Code-Commit lag darunter (`cce82d4`). Das Skript
+meldete dem Gate nur `HEAD` → das Gate wertete „kein Code-Commit" und lehnte ab
+(`PREFLIGHT: FAIL`), obwohl der Code-Commit auf `origin/dev` integriert war.
+
+Fix in `scripts/kpt-deliver.sh`: es werden jetzt **alle** Commits mit Task-ID in der
+Message seit dem Ziel-Branch (`git log --format=%H -F --grep="$t" "$remote/$branch..HEAD"`)
+plus `HEAD` an `donegate-check.sh` übergeben. Danach: `OK: e595f525… auf origin/dev` →
+`PREFLIGHT: OK`.
