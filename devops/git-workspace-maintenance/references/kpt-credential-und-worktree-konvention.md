@@ -183,6 +183,19 @@ git -C /workspace/kijan-hermes-shared \
 `origin` zeigt auf `kijan/kijan-hermes-shared` (kein Schreibrecht), `push` auf den
 Fork `kijan007-agent/kijan-hermes-shared` — geliefert wird ueber `push`.
 
+**Push-Berechtigung fuer `push` (Befund t_05100867, 2026-11-19):** der kanonische
+Store `/workspace/.git-credentials` enthaelt nur ein `x-access-token` fuer `kijan007`;
+das liefert auf `kijan007-agent/kijan-hermes-shared` `403 Permission denied`.
+Der Token fuer `kijan007-agent` liegt in `~/.git-credentials` (der globale
+`store`-Helper liest sie). Loesung — einmalig pro Clone, kein Repo-Commit:
+
+```bash
+git -C /workspace/kijan-hermes-shared config credential.username kijan007-agent
+```
+
+Nach dem Setzen liefert `git push push HEAD:dev` Exit 0. **Nicht** in die kpt-Submodule
+kopieren: dort bleibt es bei `store` + `store --file /workspace/.git-credentials` (AK 1).
+
 ### Regeln waehrend der Arbeit
 - Im Haupt-Checkout **keinen** Branch wechseln, nichts liegen lassen.
 - Fremde Aenderungen nicht anfassen, nicht committen, nicht zuruecksetzen
