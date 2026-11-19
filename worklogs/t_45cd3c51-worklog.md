@@ -112,6 +112,30 @@ Nicht versioniert (Container-Laufzeitkonfiguration, kein Projektcode):
 - Config-Repo `kijan007/hermes-config-kpt`: Branch `task/t_45cd3c51`, Basis `origin/dev`,
   Commits mit Task-ID `t_45cd3c51` in der Message, gepusht auf `dev` + `task/t_45cd3c51`.
 - `kijan-hermes-shared`: Branch `task/t_45cd3c51`, Basis `push/dev` (Fork
-  `kijan007-agent/kijan-hermes-shared`), Commits mit Task-ID, PR gegen `dev` des kanonischen
-  Repos.
+  `kijan007-agent/kijan-hermes-shared`), Commits mit Task-ID, auf `push/dev` integriert.
 - Abschlussprüfung: `bash /workspace/.hermes/scripts/donegate-check.sh t_45cd3c51 <worktree> <sha>`.
+
+## Abschluss-Verifikation (Lauf t_45cd3c51, 2026-11-19)
+
+- `bash -n scripts/kpt-deliver.sh` → exit 0 (Syntax ok).
+- `diff scripts/kpt-deliver.sh /workspace/.hermes/scripts/kpt-deliver.sh` → identisch
+  (aktives Laufzeit-Skript = versionierter Stand).
+- K13 Config-Repo: `git fetch --prune origin '+refs/heads/*:refs/remotes/origin/*'` →
+  `git for-each-ref refs/remotes/origin/task | wc -l` = 35,
+  `git ls-remote --heads origin 'refs/heads/task/*' | wc -l` = 35 → **keine stale Refs**.
+- K13 `kijan-hermes-shared`: `git for-each-ref refs/remotes/push/task | wc -l` = 5,
+  `git ls-remote --heads push 'refs/heads/task/*' | wc -l` = 5 → **keine stale Refs**.
+- K14-Trockenlauf: `bash /workspace/.hermes/scripts/donegate-check.sh t_b6e78edd --docs-only \
+  "<Begründung>" /workspace/Github/KijanPersonalTracker/kpt-backend/.worktrees/t_b6e78edd \
+  2e0f4ffc0cd7ebd3ae3c7a649befa8214c3005e1` → **`PREFLIGHT: OK`**.
+- Gate-Trockenlauf des Tasks selbst:
+  `bash /workspace/.hermes/scripts/donegate-check.sh t_45cd3c51 \
+  /workspace/.worktrees/t_45cd3c51/config cce82d4a092a47f990dc63435dd3bad798ad87b2`
+  → **`PREFLIGHT: OK`**.
+- PR-Hinweis: Das im Manifest genannte kanonische Repo `kijan/kijan-hermes-shared` ist mit
+  keinem der drei im Container hinterlegten Credentials (`kijan007`, `x-access-token`,
+  `kijan007-agent`) auffindbar — GitHub API antwortet durchgängig `404 Not Found`
+  (auch `git ls-remote`), und `kijan007-agent/kijan-hermes-shared` ist laut API kein Fork
+  (`fork: false`, kein `parent`). Die Lieferung deshalb direkt auf den laut Manifest
+  kanonischen Remote `push` (`kijan007-agent/kijan-hermes-shared`, Ziel-Branch `dev`);
+  ein PR gegen `kijan/kijan-hermes-shared` ist aus dem Container nicht erstellbar.
