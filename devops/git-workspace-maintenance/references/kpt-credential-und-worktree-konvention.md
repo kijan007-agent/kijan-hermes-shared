@@ -207,19 +207,42 @@ bash /workspace/.hermes/scripts/kpt-deliver.sh <task-id> <repo>
 Rebased auf `<kanonisch_remote>/dev`, pusht nach `dev` und `task/<task-id>`,
 schliesst mit `donegate-check.sh` ab.
 
-## 6. Bekannte Restbefunde (nicht in diesem Task behoben)
+## 6. Restbefunde (Stand 2026-11-19)
 
-1. **Config-Repo-Divergenz**: `/workspace/.hermes` (Repo `hermes-config-kpt`) hat lokal
-   6 Commits vor `origin/dev` und 19 Commits dahinter (`rev-list --left-right --count`
-   → `6  19`). `repos.json`, `scripts/donegate-check.sh`, `scripts/kpt-deliver.sh` und
-   `scripts/worker-env.sh` sind lokal **untracked** (`??`), in `origin/dev` aber tracked.
-   Ursache: der Working Tree des Config-Repos wurde zurueckgesetzt, ohne dass die
-   Dateien wieder in den Index aufgenommen wurden. Wer auf `origin/dev` arbeitet,
-   erhaelt diese Dateien; wer im lokalen Checkout arbeitet, nicht.
-2. **`worker-env.sh` wird nicht geladen**: `shell_init_files: []` in
-   `profiles/devops/config.yaml`, und es gibt keine `.bashrc` im Profil-Home.
-   `GIT_CEILING_DIRECTORIES=/workspace/.hermes/kanban/workspaces` und
-   `GIT_TERMINAL_PROMPT=0` sind damit in Worker-Shells **nicht** gesetzt.
+1. **Config-Repo-Divergenz — ERLEDIGT (t_05100867, 2026-11-19)**.
+   Der Config-Repo-Checkout `/workspace/.hermes` ist selbst kein Git-Arbeitsbaum mehr
+   (`git -C /workspace/.hermes rev-parse` → `fatal: not a git repository`);
+   gepflegt wird er ueber den Clone `/workspace/.worktrees/t_05100867-cfg`
+   (Remote `origin` = `kijan007/hermes-config-kpt`, Branch `dev`).
+   Vorheriger Stand: `repos.json` war untracked lokal, `scripts/donegate-check.sh`,
+   `scripts/kpt-deliver.sh` und `scripts/worker-env.sh` waren im Repo **gar nicht**
+   enthalten (`git ls-files scripts` listete sie nicht auf).
+   Bereinigung: die drei Gate-Skripte aus `/workspace/.hermes/scripts/` 1:1 in den
+   Config-Repo-Clone uebernommen und committed
+   (`chore(config): Done-Gate-Skripte ... ins Config-Repo aufnehmen [t_05100867]`),
+   Push nach `origin/dev` und `origin/task/t_05100867`.
+   Ergebnis: `repos.json` ist tracked (`git ls-files repos.json` → `repos.json`),
+   alle drei Skripte sind tracked, Divergenz `origin/dev...HEAD` = `0  0`.
+   `donegate-check.sh` und `kpt-deliver.sh` bleiben zusaetzlich am Runtime-Pfad
+   `/workspace/.hermes/scripts/` ausfuehrbar (identischer Inhalt, md5 geprueft).
+2. **`worker-env.sh` — Review-Befund ist in dieser Umgebung NICHT REPRODUZIERBAR
+   (t_05100867, 2026-11-19)**.
+   Der Review-Befund lautete: "Datei existiert lokal nicht / wird nicht geladen".
+   Nachmessung: die Datei **existiert** und ist korrekt:
+   `/workspace/.hermes/scripts/worker-env.sh` (5 Zeilen) mit
+   `export GIT_CEILING_DIRECTORIES=/workspace/.hermes/kanban/workspaces` und
+   `export GIT_TERMINAL_PROMPT=0`; sie ist seit t_05100867 zudem **tracked** im
+   Config-Repo (siehe Befund 1). Damit ist der Kern des Review-Befunds widerlegt.
+   Offen bleibt nur die *Ladung*: `terminal.shell_init_files: []` steht aktuell in
+   **allen** 30 Profil-Configs (`grep -rn shell_init_files profiles/*/config.yaml`)
+   und in der Root-`config.yaml` gibt es keinen `shell_init`-Schluessel. Die
+   Datei wird also nicht ueber `shell_init_files` eingebunden; die Review-Aussage
+   "Datei fehlt" bleibt dennoch unzutreffend.
+   **Konsequenz fuer Worker (verbindlich):** `GIT_CEILING_DIRECTORIES` und
+   `GIT_TERMINAL_PROMPT=0` nicht voraussetzen. Deshalb gilt weiterhin die Regel
+   aus Abschnitt 5: Projektarbeit **immer** in einem expliziten Worktree des
+   kanonischen Repos, nie im Hermes-Home, und Git-Befehle nie relativ aus dem
+   Hermes-Home heraus starten.
 3. **DEV_VERIFY-Kette (9 Tasks)**: `/workspace/.hermes/dev-status/latest.json` meldet
    `state=fail`, `sha=7cde31a3`, `note=restore_dev.sh fehlgeschlagen (Prod-Dump konnte
    nicht in die Dev-DB geladen werden)`. `restore_dev.sh` liegt nicht im Container —
@@ -230,3 +253,50 @@ schliesst mit `donegate-check.sh` ab.
    (Gate-Preflight `PREFLIGHT: OK`), aber die Karten tragen weiterhin ein
    `NEEDS_USER_DECISION`-Praefix — `autounblock.py` klassifiziert sie als `human`
    und entblockt sie **nicht** automatisch. Entblocken muss ein Mensch ausloesen.
+
+## 7. Konvention: weitere Repos aufnehmen
+
+Wenn ein neues kpt-Repo (oder ein neues Submodul) dazukommt, gilt diese Reihenfolge —
+sie ist in einem Task mit Task-ID im Commit-Namen zu erledigen:
+
+1. **Eintrag in `repos.json`** (Config-Repo `hermes-config-kpt`, Branch `dev`):
+   ```json
+   "<repo-name>": {
+     "pfad": "<repo-name>",
+     "push_remote": "upstream",
+     "origin": "kijan007/<repo-name>",
+     "upstream": "kijan007/<repo-name>",
+     "ziel": "dev",
+     "basis_branch": "dev",
+     "kanonisch_remote": "upstream",
+     "hinweis": "alles in kijan007 (Remote upstream)"
+   }
+   ```
+   `kanonisch_remote` muss ein real existierender Remote des Repos sein; `ziel`
+   und `basis_branch` sind `dev`.
+
+2. **Credential-Helper auf den kanonischen Store vereinheitlichen**:
+   ```bash
+   git -C <repo> config --local --unset-all credential.helper   # Fremd-Eintraege raus
+   git -C <repo> config --get-all credential.helper               # Ist-Anzeige
+   ```
+   Sollwert: `store` + `store --file /workspace/.git-credentials` (global aus
+   `/workspace/.hermes/profiles/<profil>/home/.gitconfig`). **Kein** Pfad in ein
+   Scratch-Verzeichnis eines fremden Profils (`…/profiles/*/cache/scratch/…`) —
+   beim Aufraeumen des Scratch-Caches bricht sonst der Push-Zugang weg.
+
+3. **Push-Probe** (kanonisches Remote, kein Lock-Fehler):
+   ```bash
+   git -C <repo> push --dry-run <kanonisch_remote> HEAD:refs/heads/task/probe-<task-id>
+   ```
+   Exit 0 und kein `unable to get credential storage lock` ist Pflicht. Fuer
+   Repos ohne `upstream`-Remote (z. B. `kpt-watchface-ciq`) ist `origin` das
+   kanonische Remote.
+
+4. **Ist-Tabelle in Abschnitt 2 nachziehen**: neue Zeile mit Repo-Name,
+   tatsaechlichem Helper-Wert und Datum des Nachweises; Fremd-Eintraege, die
+   entfernt wurden, in der Fussnote der Tabelle benennen.
+
+5. **Konvention aktualisieren und liefern**: Commit in
+   `kijan-hermes-shared` (Remote `push`, Branch `dev`) mit Task-ID im Namen,
+   dazu Worklog `worklogs/<task-id>-worklog.md` mit Befehl + Ergebnis je Schritt.
