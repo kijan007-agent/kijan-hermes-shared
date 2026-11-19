@@ -64,22 +64,53 @@ Ebenso für `kpt-app-ciq` (upstream) und `kpt-doc` (origin) geprüft.
 
 ## 2. Submodul-Credential-Helper vereinheitlichen
 
-`credential.helper` war über die Submodule hinweg uneinheitlich. Zwei Abweichungen
-wurden auf den kanonischen Store umgestellt:
+`credential.helper` war über die Submodule hinweg uneinheitlich. Ursprüngliche
+Abweichungen (t_33e8debc, 2026-11-02): `kpt-app-ciq` auf `store --file=/tmp/git-cred`
+(ephemer), `kpt-website-pre-release` auf den Profil-lokalen Store, sechs Repos auf
+`store --file /workspace/.hermes/profiles/web-development/cache/scratch/.gh-creds`
+(Scratch-Cache eines **fremden** Profils — beim Aufräumen dieses Caches bricht der
+Push-Zugang weg).
 
-| Submodul | vorher | nachher |
+### Ist-Zustand nach Vereinheitlichung (Nachweis t_05100867, 2026-11-19)
+
+Verifikation je Repo mit `git -C <repo> config --get-all credential.helper`.
+Sollwert: `store` + `store --file /workspace/.git-credentials` (global aus
+`/workspace/.hermes/profiles/devops/home/.gitconfig`).
+
+| Repo | credential.helper (Ist 2026-11-19) | konform |
 |---|---|---|
-| `kpt-app-ciq` | `store --file=/tmp/git-cred` (ephemer, `/tmp` nicht persistent) | `store --file=/workspace/.git-credentials` |
-| `kpt-website-pre-release` | `store --file=/workspace/.hermes/profiles/devops/home/.git-credentials` (Profil-lokal) | `store --file=/workspace/.git-credentials` |
+| KijanPersonalTracker (main) | `store`, `store --file /workspace/.git-credentials` | ja |
+| kpt-admin | dito | ja |
+| kpt-app-ciq | dito | ja |
+| kpt-backend | dito | ja |
+| kpt-common-barrels-ciq | dito | ja |
+| kpt-datafield-ciq | dito | ja |
+| kpt-doc | dito | ja |
+| kpt-symptoms-app | dito | ja |
+| kpt-watchface-ciq | dito (lokaler Fremd-Eintrag `…/profiles/web-development/cache/scratch/.gh-creds` am 2026-11-19 entfernt) | ja |
+| kpt-website | dito | ja |
+| kpt-website-pre-release | dito | ja |
 
-Die übrigen Submodule nutzen `store --file /workspace/.hermes/profiles/web-development/cache/scratch/.gh-creds`.
-Diese Datei enthält dieselben zwei Credential-Varianten (`x-access-token` und `kijan007`)
-für `github.com` und funktioniert. Sie liegt allerdings im Scratch-Cache eines
-fremden Profils — deshalb ist `/workspace/.git-credentials` die kanonische Quelle.
+Korrektur t_05100867: `kpt-watchface-ciq` hatte als einziges Repo noch einen
+**lokalen** Eintrag `store --file /workspace/.hermes/profiles/web-development/cache/scratch/.gh-creds`
+in seiner `.git/config` (global war bereits korrekt). Entfernt mit
+`git -C kpt-watchface-ciq config --local --unset-all credential.helper`;
+danach greift wieder der globale kanonische Store. Damit zeigen **alle 11 Repos**
+(main + 10 Submodule mit `.git`) auf exakt einen kanonischen Store.
 
-Alle Stores enthalten beide Eintraege fuer `https://github.com`:
-- `//x-access-token:<token>` (App-Token)
+Push-Probe je Repo (`git push --dry-run <kanonisch_remote> HEAD:refs/heads/task/t_05100867`):
+11/11 Exit 0, kein `unable to get credential storage lock`. Hinweis: `kpt-watchface-ciq`
+hat nur ein `origin`-Remote (kein `upstream`) — kanonisches Remote ist dort `origin`.
+
+Alle Stores enthalten Eintraege fuer `https://github.com`:
+- `//x-access-token:***>` (App-Token)
 - `//kijan007:<token>` (PAT)
+
+Stand 2026-11-19: `/workspace/.git-credentials` (75 B, 600, uid 1000) enthält den
+github.com-Eintrag; `/workspace/.hermes/home/.git-credentials` (144 B, 666) enthält
+beide Varianten. Die Dateien sind **nicht mehr byte-identisch** (frühere Annahme im
+Review überholt); massgeblich ist, dass der von `credential.helper` referenzierte
+kanonische Store funktioniert — nachgewiesen durch die 11/11 erfolgreichen Push-Proben.
 
 `/workspace/.config/gh/hosts.yml` ist korrekt (`user: kijan007`, Token vorhanden),
 wird aber nicht genutzt: die `gh`-CLI ist im Container nicht installiert
