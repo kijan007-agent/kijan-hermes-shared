@@ -117,6 +117,29 @@ kanban_block(reason="Rate limit key choice: IP (simple, NAT-unsafe) or user_id (
 
 The block message is what appears in the dashboard / gateway notifier. The comment is the deeper context a human reads when they open the task.
 
+## Attachments: never inline base64 above ~4 kB (t_edbb0e12)
+
+`kanban_attach` takes the file bytes as base64 **inside the tool-call argument**.
+Base64 grows ~4/3, so a 9 kB report is ~11.6k characters of tool output. That
+exceeds the model's max-output tokens: the call is truncated, never executed, and
+the run dies with "model hit max output tokens … still truncated after 4
+continuation attempts" or loops in compression cooldown (observed twice on
+t_26ca3e9e, runs 61866/62022; cause analysis in t_1ddab3fc).
+
+Rules:
+- File ≤ ~3 kB: `kanban_attach` is fine.
+- File > ~3 kB, NEVER produce inline base64. Use instead, in this order:
+  1. **Commit the report** to the repo (`docs/reviews/<thema>/<datum>-<slug>.md`)
+     and reference the commit SHA + repo-relative path in the task comment /
+     completion summary. This is also the REVIEW-ARTIFAKTE rule in SOUL.
+  2. `kanban_attach_url` with an http(s) URL the gateway can fetch (staging/raw
+     GitHub URL) — the bytes never pass through a tool-call argument.
+  3. Reference a file already in the repo (path + SHA) without attaching.
+- Never retry a truncated `kanban_attach` by re-generating the same base64 — the
+  retry reproduces the same truncation. Switch to option 1/2/3 immediately.
+- If a card demands an attachment you cannot deliver via 1-3, `kanban_block`
+  with the file path and size; do not grind.
+
 ## Heartbeats worth sending
 
 Good heartbeats name progress: `"epoch 12/50, loss 0.31"`, `"scanned 1.2M/2.4M rows"`, `"uploaded 47/120 videos"`.

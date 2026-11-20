@@ -133,6 +133,18 @@ Tell them what you created in plain prose:
 >
 > The dispatcher will pick up T1 and T2 now. T3 starts when both finish. You'll get a gateway ping when T4 completes. Use the dashboard or `hermes kanban tail <id>` to follow along.
 
+## Card bodies must not require large inline attachments (t_edbb0e12)
+A step like "attach the N-page report to the task" makes the worker emit the file
+as base64 inside one tool-call argument. Above ~3 kB of file (>4 kB of base64)
+that argument exceeds the model's max-output tokens: the call never executes and
+the run crashes or loops in compression cooldown (t_26ca3e9e runs 61866/62022,
+cause analysis t_1ddab3fc). Write the delivery requirement as **commit +
+reference** instead — "commit to `docs/reviews/<thema>/<datum>-<slug>.md`, cite
+SHA + repo-relative path in the completion summary" — or name
+`kanban_attach_url` with a fetchable URL. If a big binary attachment is genuinely
+wanted, give it its own card whose body states the size and the URL source, so no
+worker ever has to inline it.
+
 ## Common patterns
 
 **Fan-out + fan-in (research → synthesize):** N `researcher` tasks with no parents, one `analyst` task with all of them as parents.
